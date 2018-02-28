@@ -14,9 +14,12 @@ public:
     vector<double> y;
     vector<double> z;
     vector<double> t;
+    vector<struct tm> tm;
     vector<bool> use;
-    vector<double> mov_err;
-    vector<double> obs_err;
+    vector<double> ObsVarXY;
+    vector<double> ObsVarZ;
+    vector<double> MoveVarXY;
+    vector<double> MoveVarZ;
 
     AnimalData(string id_name) {
         id = id_name;
@@ -24,9 +27,12 @@ public:
         vector<double> * y = new vector<double>();
         vector<double> * z = new vector<double>();
         vector<double> * t = new vector<double>();
-        vector<double>  * mov_err = new vector<double>();
-        vector<double> * obs_err = new vector<double>();
-        vector<bool> * use = new vector<bool>();
+        vector<double>  * tm = new vector<double>();
+        vector<double> * use = new vector<double>();
+        vector<double> * ObsVarXY = new vector<double>();
+        vector<double> * ObsVarZ = new vector<double>();
+        vector<double> * MoveVarXY = new vector<double>();
+        vector<double> * MoveVarZ = new vector<double>();
     }
 };
 #endif //ANIMALDATA_H

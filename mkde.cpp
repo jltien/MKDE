@@ -1,17 +1,11 @@
 #include "mkde.h"
 
+//time_t or struct tm for storing the time, added commas to the file bc sometimes spaces sometimes tabs
 using namespace std;
 
-// add the err to struct
-// get on github, readme with future stuff
-// makefile
-
-
 int main() {
-
     unordered_map<string, AnimalData *> *animals;
-    animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/birds.txt");
-
+    animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
     /*
     * grid_x / grid_y = array[10] = {0.5, 1.5 ... 9.5}
     * move_var = array[size of x] = {2.0... }
@@ -19,18 +13,17 @@ int main() {
     * t_step = 1.0
     * pdf_thresh = 10^-14
     */
-
+/*
     vector<double> grid_x;
     vector<double> grid_y;
     vector<double> move_var;
     vector<double> obs_var;
     double t_step = 1.0;
     double pdf_thresh = pow(10.0, -14);
-    int value = 0.0;
 
-    for (int i = 0; i < 10; i++) {
-        grid_x.push_back(value + 0.5);
-        grid_y.push_back(value + 0.5);
+    for (double i = 0.5; i < 10; i++) {
+        grid_x.push_back(i);
+        grid_y.push_back(i);
     }
     for (int i = 0; i < animals->begin()->second->x.size(); i++) {
         move_var.push_back(2.0);
@@ -41,7 +34,7 @@ int main() {
         mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
                grid_x, grid_y, move_var, obs_var, t_step, pdf_thresh);
     }
-
+*/
 /*
     for (auto it = begin(*animals); it != end(*animals); ++it) {
         for (int i = 0; i < it->second->x.size(); i++) {
@@ -52,12 +45,10 @@ int main() {
             cout << it->first << " " << x[i] << " "
                  << y[i] << " " << z[i] << " " << t[i] << endl;
         }
-    } */
+    }*/
 
     return 0;
 }
-
-// column of mov and obs err
 
 /*****************************************************************************
  * Takes an animal data file with an id(string), x(double), y(double), and
@@ -89,13 +80,13 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         // Parses each individual line of data for each data entry
         while (ss) {
             string next;
-
+/*
             if (!getline(ss, next, ',')) break;
 
             record.push_back(next);
 
-            // 5 data entries to populate record with
-            if (record.size() != 5) {
+            // 7 data entries to populate record with
+            if (record.size() != 7) {
                 continue;
             }
 
@@ -104,9 +95,28 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             double y = stod(record[2]);
             double z = stod(record[3]);
             double t = stod(record[4]);
-            cout << "w " <<record[5] << endl;
-            //double merr = stod(record[5]);
-           // double oerr = stod(record[6]);
+            double merr = stod(record[5]);
+            double oerr = stod(record[6]);
+            */
+            if (!getline(ss, next, '\t')) break;
+            record.push_back(next);
+            if (record.size() != 10) {
+                continue;
+            }
+            string id = record[0];
+            string date_string = record[1];
+            struct tm tm;
+            const char * date_char = date_string.c_str();
+            strptime(date_char, "%m/%d/%Y %H:%M", &tm);
+            double x = stod(record[2]);
+            double y = stod(record[3]);
+            double z = stod(record[4]);
+            double t = stod(record[5]);
+            double obs_var_xy = stod(record[6]);
+            double obs_var_z = stod(record[7]);
+            double mov_var_xy = stod(record[8]);
+            double mov_var_z = stod(record[9]);
+
             unordered_map<string, AnimalData *>::const_iterator exists = animals->find(id);
 
             // A new animal has been encountered
@@ -117,12 +127,15 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             }
 
             new_animal = exists->second;
+
             new_animal->x.push_back(x);
             new_animal->y.push_back(y);
             new_animal->z.push_back(z);
-            new_animal->t.push_back(t);
-        //    new_animal->mov_err.push_back(merr);
-          //  new_animal->obs_err.push_back(oerr);
+            new_animal->tm.push_back(tm);
+            new_animal->ObsVarXY.push_back(obs_var_xy);
+            new_animal->ObsVarZ.push_back(obs_var_z);
+            new_animal->MoveVarXY.push_back(mov_var_xy);
+            new_animal->MoveVarZ.push_back(mov_var_z);
         }
     }
 
@@ -278,6 +291,7 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
     for (int i1 = 0; i1 < nX; i1++) {
         for (int i2 = 0; i2 < nY; i2++) {
             kk = getLinearIndex(i1, i2, 0, nX, nY);
+
             mkde[kk] = mkde[kk] / totalT;
             if (mkde[kk] > maxDens) {
                 maxDens = mkde[kk];
