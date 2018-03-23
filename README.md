@@ -4,9 +4,9 @@
 
 ## TO-DO List:
 - [x] Make To-Do List Template
-- [ ] Thing 1
-- [ ] Thing 2
-- [ ] Thing 3
+- [ ] Change precision of data in raster (gridFloat) class to double (Jeff)
+- [ ] Incorporate gridFloat class into current MKDE code (Joyce)
+- [ ] Discuss how to extend raster class to 3D (All)
 - [ ]  ...
 
 
