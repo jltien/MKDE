@@ -19,10 +19,9 @@
 - PREPROCESSOR DIRECTIVES
 ------------------------------------------------------------------------------*/
 
-#include "/home/jeff/projects/myCPPlib/basicDefinitions.h"
-#include "/home/jeff/projects/myCPPlib/file_io.h"    // byte swapping functions
-#include "/home/jeff/projects/myCPPlib/GeometricPrimatives.h"    // need definitions for point and vect
-#include "/home/jeff/projects/myCPPlib/rand_num.h"
+#include "basicDefinitions.h"
+#include "basicFunctions.h"
+#include "file_io.h"    // byte swapping functions
 
 #include <iostream>   // not required by most systems
 #include <fstream>
@@ -48,17 +47,6 @@ const int NULL_RASTER_ID = -1;
 -----------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
-* FUTURE ADDITIONS AND CHANGES:                                               *
-* 1.  Read in only parts of raster files so can deal with larger files        *
-* 2.  Implement quadtrees and compression algorithms for integer rasters      *
-* 3.  Implement functions to calculate percolation, numbers of patches,       *
-*     patch sizes, etc. for integer rasters.                                  *
-* 4.  Implement viewshed function for float rasters.                          *
-* 5.  Open GIS, GRASS GIS data formats?                                       *
-* 6.  Define math operators for grid objects (*, -, /, +, etc.)               *
------------------------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------------
 * NOTE ABOUT COORDINATES AND RASTER INDICES:                                  *
 * The column indexes and the x-coordinates both increase from left to right   *
 * The row indices increase from top to bottom, but the y-coordinates increase *
@@ -68,24 +56,182 @@ const int NULL_RASTER_ID = -1;
 -----------------------------------------------------------------------------*/
 
 /*============================================================================*
+* A CLASS FOR BOUNDING BOX GEOMETRY                                           *
+*============================================================================*/
+
+
+class box {
+	private:
+        double x_min;
+        double y_min;
+        double x_max;
+        double y_max;
+		void correct();                                       //
+		// 16 bytes of data
+	public:
+		box();                                                // default constructor
+		box(double xMin, double yMin, double xMax, double yMax); // constructor
+		box(const box & b);                                   // copy constructor
+		void reset(box & b);                                  //
+		void reset(double xMin, double yMin, double xMax, double yMax);  //
+		void reset_xMin(double xx);                           //
+		void reset_xMax(double xx);                           //
+		void reset_yMin(double yy);                           //
+		void reset_yMax(double yy);                           //
+        bool pointIsInBox(double x, double y);                //
+		double get_xMin();                                    //
+		double get_yMin();                                    //
+		double get_xMax();                                    //
+		double get_yMax();                                    //
+		double area();                                        //
+		bool equals(box & b);                                 //
+		void print();                                         //
+};
+
+
+/*-----------------------------------------------------------------------------
+* Member Functions for box class
+-----------------------------------------------------------------------------*/
+inline box::box() {
+    x_min = 0.0;
+    y_min = 0.0;
+    x_max = 0.0;
+    y_max = 0.0;
+}
+
+inline box::box(double xMin, double yMin, double xMax, double yMax) {
+    x_min = xMin;
+    y_min = yMin;
+    x_max = xMax;
+    y_max = yMax;
+	correct();
+}
+
+inline box::box(const box & b) {
+    x_min = b.x_min;
+    y_min = b.y_min;
+    x_max = b.x_max;
+    y_max = b.y_max;
+	correct();
+}
+
+inline void box::reset(box & b) {
+    x_min = b.x_min;
+    y_min = b.y_min;
+    x_max = b.x_max;
+    y_max = b.y_max;
+	correct();
+}
+
+inline void box::reset(double xMin, double yMin, double xMax, double yMax) {
+	x_min = xMin;
+    y_min = yMin;
+    x_max = xMax;
+    y_max = yMax;
+	correct();
+}
+
+inline void box::reset_xMin(double xx) {
+	x_min = xx;
+	correct();
+}
+
+inline void box::reset_xMax(double xx) {
+	x_max = xx;
+	correct();
+}
+
+inline void box::reset_yMin(double yy) {
+	y_min = yy;
+	correct();
+}
+
+inline void box::reset_yMax(double yy) {
+	y_max = yy;
+	correct();
+}
+
+// fix the bounding box if it is incorrect.  Many of the functions
+// for this class rely on xMin < xMax and yMin < yMax.  Calling this
+// function after any changes will ensure this condition is true
+inline void box::correct() {
+	if (x_min > x_max) {
+		double tmpx = x_max;
+		x_max = x_min;
+		x_min = tmpx;
+	}
+	if (y_min > y_max) {
+		double tmpy = y_max;
+		y_max = y_min;
+		y_min = tmpy;
+	}
+}
+
+
+inline bool box::pointIsInBox(double x, double y) {
+	if((x < x_min)||(x > x_max)||(y < y_min)||(y > y_max)) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+inline double box::get_xMin() {
+	return x_min;
+}
+
+inline double box::get_xMax() {
+	return x_max;
+}
+
+inline double box::get_yMin() {
+	return y_min;
+}
+
+inline double box::get_yMax() {
+	return y_max;
+}
+
+inline double box::area() {
+	double a = (x_max - x_min)*(y_max - y_min);
+	return a;
+}
+
+inline bool box::equals(box & b) {
+    if ((x_min == b.x_min) && (x_max == b.x_max) && (y_min == b.y_min) && (y_max = b.y_max)) {
+        return true; // really should be a comparison +/- some tolerance
+    }
+    else {
+        return false;
+    }
+}
+
+inline void box::print() {
+	std::cout << "BOX: LL: (" << x_min << ", " << y_min << ")";
+	std::cout << " UR: (" << x_max << ", " << y_max << ")" << std::endl;
+}
+
+
+/*============================================================================*
 * A CLASS FOR FLOATING-POINT RASTERS                                          *
 *============================================================================*/
 class gridFloat {
 	private:
         // properties of the raster
-	long num_rows;                                               // number of rows
-	long num_cols;                                               // number of cols
-	double cell_size;                                            // cell width
-	float no_dat;                                                // no data value
+	    long num_rows;                                               // number of rows
+	    long num_cols;                                               // number of cols
+	    double cell_size;                                            // cell width
+	    float no_dat;                                                // no data value
         //      there may be others (e.g., row_major or col_major)
         // grid data
-	box grid_bbox;                                               // bounding box for grid
-	float ** data;                                               // grid data 2D dynamic Array
+	    box grid_bbox;                                               // bounding box for grid
+	    float ** data;                                               // grid data 2D dynamic Array
         int rasterID;                                                // an ID number fo rthis raster layer
 	public:
-	gridFloat();                                                 // default constructor
+	    gridFloat();                                                 // default constructor
         gridFloat(int rID, long nr, long nc, double xll, double yll, double cellsz);  // contruct and array of 0.0s
-	gridFloat(int rID, char * filenm, char * filetype);           // filetype = (esri_ascii, esri_binary)
+	    gridFloat(int rID, char * filenm, char * filetype);           // filetype = (esri_ascii, esri_binary)
         gridFloat(const gridFloat & inGrid);                         // copy constructor
         ~gridFloat();                                                // destructor
 	
@@ -94,11 +240,11 @@ class gridFloat {
 
         // access to grid information
         int getRasterID() { return rasterID; }                       // 
-        box get_minBoundingBox() {return grid_bbox;}                 // get bounding box CHAMGE TO RETURN ARRAY OF XMIN, XMAX, YMIN, YMAX
+        box get_minBoundingBox() {return grid_bbox;}                 // 
         double getCellSize() { return cell_size; }                   // 
         long getNumberOfRows() {return num_rows; }                   // 
         long getNumberOfColumns() { return num_cols; }               // 
-        float getNoDataValue();                                      //
+        float getNoDataValue() {return no_dat; }                     //
 
         // get indices into raster given location coordinates
         long getGridRow(double ycoord);                              // get row index
@@ -115,9 +261,11 @@ class gridFloat {
         void setGridValue(long rw, long cl, float val);              // set value
         void setGridValue(double xcoord, double ycoord, float val);  // set value
 
-        // MIGHT REMOVE THE NEXT 8 METHODS??
+        // modify individual cells
         void addValueToGridCell(long rw, long cl, float val);        // add value to grid cell
         void addValueToGridCell(double xcoord, double ycoord, float val);  // add value to grid cell
+        
+        // modify entire grid
         void scaleGridCellValue(long rw, long cl, float val);        // multiplify grid cell valule
         void scaleGridCellValue(double xcoord, double ycoord, float val);  // multiplify grid cell valule
         void setAllCellsToZero(bool changeMissing=false);          // set all cells to 0.0
@@ -141,10 +289,6 @@ class gridFloat {
 /*------------------------------------------------------------------------------
 - INLINE FUNCTIONS
 ------------------------------------------------------------------------------*/
-
-inline float gridFloat::getNoDataValue() {
-    return no_dat;
-}
 
 inline bool gridFloat::isValidRowIndex(long i) {
     if ((i >= 0)&&(i < num_rows)) return true;
