@@ -1,6 +1,5 @@
 #include "mkde.h"
 
-//time_t or struct tm for storing the time, added commas to the file bc sometimes spaces sometimes tabs
 using namespace std;
 
 int main() {
@@ -13,7 +12,7 @@ int main() {
     * t_step = 1.0
     * pdf_thresh = 10^-14
     */
-/*
+
     vector<double> grid_x;
     vector<double> grid_y;
     vector<double> move_var;
@@ -21,8 +20,10 @@ int main() {
     double t_step = 1.0;
     double pdf_thresh = pow(10.0, -14);
 
-    for (double i = 0.5; i < 10; i++) {
+    for (double i = 5853022; i < 722953; i=i+250) {
         grid_x.push_back(i);
+    }
+    for (double i = 3364040; i < 3514539; i=i+250) {
         grid_y.push_back(i);
     }
     for (int i = 0; i < animals->begin()->second->x.size(); i++) {
@@ -32,9 +33,8 @@ int main() {
 
     for (auto it = animals->begin(); it != animals->end(); ++it) {
         mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
-               grid_x, grid_y, move_var, obs_var, t_step, pdf_thresh);
+               grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh);
     }
-*/
 /*
     for (auto it = begin(*animals); it != end(*animals); ++it) {
         for (int i = 0; i < it->second->x.size(); i++) {
@@ -131,6 +131,7 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             new_animal->x.push_back(x);
             new_animal->y.push_back(y);
             new_animal->z.push_back(z);
+            new_animal->t.push_back(t);
             new_animal->tm.push_back(tm);
             new_animal->ObsVarXY.push_back(obs_var_xy);
             new_animal->ObsVarZ.push_back(obs_var_z);
@@ -185,7 +186,6 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
     for (int i = 0; i < nX * nY; ++i) {
         mkde[i] = 0.0;
     }
-
     // set up time variables
     double t0, t1, t, tOld, dt, alpha, totalT;
 
@@ -239,6 +239,8 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
                 for (int i2 = 0; i2 < nY; i2++) {
                     ydens[i2] = integrateNormal(grid_y[i2] - 0.5 * ySz, grid_y[i2] + 0.5 * ySz, eY,
                                                 sqrt(sig2xy));
+//                    cout << "1st " << (grid_y[i2] - 0.5 * ySz) <<  endl << "2nd " << (grid_y[i2] + 0.5 *ySz)
+//                         << endl <<" 3rd " << eY << endl << "4th " << sqrt(sig2xy) << endl;
                 }
 
                 // x-dimension
@@ -542,6 +544,8 @@ double univariateNormalDensityThreshold(double p, double sigma2) {
  *****************************************************************************/
 double pnorm(double x, double mu, double sigma) {
     double err = erf(((x - mu) / (sigma * sqrt(2))));
+//    cout << "mu " << (x-mu) << endl;
+//    cout << "err " << erf((x-mu)/(sigma*sqrt(2))) << endl;
     return 0.5 * (1 + err);
 }
 
@@ -553,6 +557,9 @@ double pnorm(double x, double mu, double sigma) {
 double integrateNormal(double x0, double x1, double mu, double sigma) {
     double p0 = pnorm(x0, mu, sigma);
     double p1 = pnorm(x1, mu, sigma);
+//    cout << "x0 " << x0 << " mu " << mu << " sigma " << sigma << endl;
+//    cout << "p0 " << p0 << endl;
+//    cout << "p1 " << p1 << endl;
     return p1 - p0;
 }
 

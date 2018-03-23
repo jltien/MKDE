@@ -13,7 +13,7 @@ public:
     vector<double> x;
     vector<double> y;
     vector<double> z;
-    vector<double> t;
+    vector<double> t; // minutes elapsed
     vector<struct tm> tm;
     vector<bool> use;
     vector<double> ObsVarXY;
