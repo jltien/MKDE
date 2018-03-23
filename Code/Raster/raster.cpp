@@ -15,11 +15,17 @@
 // ONE PROBLEM IS THAT WE WILL NEED TO INCLUDE THE BYTE SWAPPING FUNCTION FOR FLOAT AND
 // A BYTE ORDER, AND SIZE OF FLOAT CHECK
 
-#include "/home/jeff/projects/myCPPlib/raster.h"
+#include "raster.h"
 
 #ifdef _ANSI_STD_H
 using namespace std;
 #endif
+
+/*******************************************************************************
+* BOUNDING BOX                                                                 *
+*******************************************************************************/
+
+
 
 /*******************************************************************************
 * FLOATING-POINT RASTER                                                        *

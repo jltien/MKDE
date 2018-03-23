@@ -14,7 +14,7 @@
 #ifndef BASIC_FUNC_H
 #define BASIC_FUNC_H
 
-#include "/home/jeff/projects/myCPPlib/basicDefinitions.h"
+#include "basicDefinitions.h"
 
 #include <iostream>
 #include <cstdlib>

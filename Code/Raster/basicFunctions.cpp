@@ -10,7 +10,7 @@
 *******************************************************************************/
 
 /**** PREPROCESSOR DIRECTIVES ****/
-#include "/home/jeff/projects/myCPPlib/basicFunctions.h"
+#include "basicFunctions.h"
 
 using namespace std;
 

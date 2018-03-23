@@ -13,14 +13,16 @@
 
 // header file includes
 
-#include "/home/jeff/projects/myCPPlib/basicDefinitions.h"
+#include "basicDefinitions.h"
 
 #ifdef _ANSI_STD_H       // using ANSI/ISO standard header file names
+#include <string>
 #include <iostream>      // not required by most systems
 #include <fstream>
 #include <iomanip>
 #include <algorithm>
 #else
+#include <string.h>
 #include <iostream.h>      // not required by most systems
 #include <fstream.h>
 #include <iomanip.h>
@@ -64,11 +66,14 @@ inline void ByteSwap(unsigned char * b, int n) {
 ******************************************************************************/
 
 // eats the rest of a line in an ASCII text file so input can continue on next line
+
 inline void eatline(std::ifstream & file_name) {
 	while (file_name.get() != '\n') continue;
 }
 
+
 // returns true if tmpString == T, false if tmpString == F, error otherwise
+/*
 inline bool boolStringIsTrue(char * tmpString) {
     if (strcmp(tmpString, "T") == 0) {
         return true;
@@ -82,8 +87,10 @@ inline bool boolStringIsTrue(char * tmpString) {
         exit(1);
     }
 }
+ */
 
 // checks to see if string is T or F; otherwise, returns false
+/*
 inline bool isProperBoolString(char * tmpString) {
     if ((strcmp(tmpString, "T") == 0)||(strcmp(tmpString, "F") == 0)) {
         return true;
@@ -92,6 +99,7 @@ inline bool isProperBoolString(char * tmpString) {
         return false;
     }
 }
+ */
 
 /******************************************************************************
 * FUNCTION PROTOTYPES                                                         *
