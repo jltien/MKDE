@@ -5,13 +5,6 @@ using namespace std;
 int main() {
     unordered_map<string, AnimalData *> *animals;
     animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
-    /*
-    * grid_x / grid_y = array[10] = {0.5, 1.5 ... 9.5}
-    * move_var = array[size of x] = {2.0... }
-    * obs_var = array[size of x] = {0.1... }
-    * t_step = 1.0
-    * pdf_thresh = 10^-14
-    */
 
     vector<double> grid_x;
     vector<double> grid_y;
@@ -20,32 +13,23 @@ int main() {
     double t_step = 1.0;
     double pdf_thresh = pow(10.0, -14);
 
-    for (double i = 5853022; i < 722953; i=i+250) {
+    for (int i = 583022; i < 722953; i = i + 250) {
         grid_x.push_back(i);
     }
-    for (double i = 3364040; i < 3514539; i=i+250) {
+    for (int i = 3364040; i < 3514539; i = i + 250) {
         grid_y.push_back(i);
     }
-    for (int i = 0; i < animals->begin()->second->x.size(); i++) {
+
+    for (int i = 0; i < 10000/*animals->begin()->second->x.size()*/; i++) {
         move_var.push_back(2.0);
         obs_var.push_back(0.1);
     }
+
 
     for (auto it = animals->begin(); it != animals->end(); ++it) {
         mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
                grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh);
     }
-/*
-    for (auto it = begin(*animals); it != end(*animals); ++it) {
-        for (int i = 0; i < it->second->x.size(); i++) {
-            vector<double> x = (it->second)->x;
-            vector<double> y = (it->second)->y;
-            vector<double> z = (it->second)->z;
-            vector<double> t = (it->second)->t;
-            cout << it->first << " " << x[i] << " "
-                 << y[i] << " " << z[i] << " " << t[i] << endl;
-        }
-    }*/
 
     return 0;
 }
@@ -61,6 +45,7 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
     ifstream infile(in_filename);   // Initialize the file stream
     bool have_header = true;
     AnimalData *new_animal;
+    static int num_grid = 0;
 
     // Keep reading lines until the end of file is reached
     while (infile) {
@@ -80,24 +65,7 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         // Parses each individual line of data for each data entry
         while (ss) {
             string next;
-/*
-            if (!getline(ss, next, ',')) break;
 
-            record.push_back(next);
-
-            // 7 data entries to populate record with
-            if (record.size() != 7) {
-                continue;
-            }
-
-            string id = record[0];
-            double x = stod(record[1]);
-            double y = stod(record[2]);
-            double z = stod(record[3]);
-            double t = stod(record[4]);
-            double merr = stod(record[5]);
-            double oerr = stod(record[6]);
-            */
             if (!getline(ss, next, '\t')) break;
             record.push_back(next);
             if (record.size() != 10) {
@@ -106,7 +74,7 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             string id = record[0];
             string date_string = record[1];
             struct tm tm;
-            const char * date_char = date_string.c_str();
+            const char *date_char = date_string.c_str();
             strptime(date_char, "%m/%d/%Y %H:%M", &tm);
             double x = stod(record[2]);
             double y = stod(record[3]);
@@ -127,7 +95,6 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             }
 
             new_animal = exists->second;
-
             new_animal->x.push_back(x);
             new_animal->y.push_back(y);
             new_animal->z.push_back(z);
@@ -166,12 +133,13 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
 // obsT, obsX, obsY: observed data
 // xyTable: a 2d array with pairs of (x,y) coordinates of cell centers
 // tMax, tStep, mvSig2xy, obsSig2: parameters
-vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
+gridFloat mkde2D(const vector<double> &T, const vector<double> &X,
                       const vector<double> &Y, const vector<bool> &use,
                       vector<double> &grid_x, vector<double> &grid_y,
                       vector<double> &move_var, vector<double> &obs_var,
                       double t_step, double pdf_thresh) {
 
+    static int num_grids = 0;
     long nObs = T.size();
 
     // grid specs
@@ -206,6 +174,7 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
         t1 = T[j + 1];
         dt = t1 - t0;
         t = t0;
+
         if (use[j] == 1) {
             bool exitLoop = false;
             bool finalLoop = false;
@@ -239,8 +208,6 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
                 for (int i2 = 0; i2 < nY; i2++) {
                     ydens[i2] = integrateNormal(grid_y[i2] - 0.5 * ySz, grid_y[i2] + 0.5 * ySz, eY,
                                                 sqrt(sig2xy));
-//                    cout << "1st " << (grid_y[i2] - 0.5 * ySz) <<  endl << "2nd " << (grid_y[i2] + 0.5 *ySz)
-//                         << endl <<" 3rd " << eY << endl << "4th " << sqrt(sig2xy) << endl;
                 }
 
                 // x-dimension
@@ -262,7 +229,6 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
                         else if (doubleEquals(t, t1)) {
                             tmpDens = (t - tOld) * pXY / 2.0;
                         }
-
                             // intermediate terms
                         else {
                             tmpDens = t_step * pXY;
@@ -288,9 +254,10 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
             }
         }
     }
+
     double maxDens = 0.0, sumDens = 0.0;
     long kk;
-    for (int i1 = 0; i1 < nX; i1++) {
+/*    for (int i1 = 0; i1 < nX; i1++) {
         for (int i2 = 0; i2 < nY; i2++) {
             kk = getLinearIndex(i1, i2, 0, nX, nY);
 
@@ -300,12 +267,25 @@ vector<double> mkde2D(const vector<double> &T, const vector<double> &X,
             }
             sumDens += mkde[kk];
         }
+    }*/
+
+    gridFloat rst(num_grids++, nY, nX, nY - 1, 0, xSz);
+    for (double i1 = 0; i1 < nX; i1++) {
+        for (double i2 = 0; i2 < nY; i2++) {
+            rst.setGridValue(i1, i2, rst.getGridValue(i1, i2) / totalT);
+
+            if (rst.getGridValue(i1, i2) > maxDens) {
+                maxDens = rst.getGridValue(i1, i2);
+            }
+            sumDens += rst.getGridValue(i1, i2);
+        }
     }
+
     cout << "\tMaximum voxel density = " << maxDens << endl;
     cout << "\tSum of voxel densities = " << sumDens << endl;
     cout << "2D MKDE Computation: DONE" << endl;
 
-    return mkde;
+    return rst;
 }
 
 /*
@@ -505,7 +485,7 @@ long getLinearIndex(long row, long col, long level, long nR, long nC) {
 }
 
 double indexToCellCenterCoord(int i, double minGridCoord, double cellSz) {
-    return minGridCoord + ((double)i)*cellSz;
+    return minGridCoord + ((double) i) * cellSz;
 }
 
 int getLowerCellIndex(double minZ, double minGridCoord, double cellSz) {
@@ -544,8 +524,6 @@ double univariateNormalDensityThreshold(double p, double sigma2) {
  *****************************************************************************/
 double pnorm(double x, double mu, double sigma) {
     double err = erf(((x - mu) / (sigma * sqrt(2))));
-//    cout << "mu " << (x-mu) << endl;
-//    cout << "err " << erf((x-mu)/(sigma*sqrt(2))) << endl;
     return 0.5 * (1 + err);
 }
 
@@ -557,9 +535,18 @@ double pnorm(double x, double mu, double sigma) {
 double integrateNormal(double x0, double x1, double mu, double sigma) {
     double p0 = pnorm(x0, mu, sigma);
     double p1 = pnorm(x1, mu, sigma);
-//    cout << "x0 " << x0 << " mu " << mu << " sigma " << sigma << endl;
-//    cout << "p0 " << p0 << endl;
-//    cout << "p1 " << p1 << endl;
     return p1 - p0;
 }
 
+bool isMachineBigEndian(void) {
+    union {
+        long num;
+        unsigned char uc[sizeof(long)];
+    } u;
+    u.num = 1;
+    if (u.uc[0] == 1) {
+        return false;
+    } else {
+        return true;
+    }
+}

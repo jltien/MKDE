@@ -30,7 +30,7 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <malloc.h>      // for malloc_stats()
+//#include <malloc.h>      // for malloc_stats()
 #include <sys/stat.h>    // to get file sizes using fstat
 
 // EXPECTED SIZES OF DATA TYPES
