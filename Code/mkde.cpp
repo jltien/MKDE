@@ -156,7 +156,6 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         it->second->xmax = xmax;
         it->second->ymin = ymin;
         it->second->ymax = ymax;
-        cout << "xmin: " << xmin << "xmax: " << xmax << "ymin: " << ymin << "ymax: " << ymax << endl;
     }
 
     return animals;

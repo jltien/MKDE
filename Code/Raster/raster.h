@@ -528,7 +528,7 @@ inline bool gridFloat::cellIsMissingData(double x, double y) {
 
 inline float gridFloat::getGridValue(long rw, long cl) {
 	if((rw < 0)||(rw >= num_rows)||(cl < 0)||(cl >= num_cols)) {
-		return no_dat;
+        return no_dat;
 	}
 	else {
 		return data[rw][cl];
@@ -538,7 +538,7 @@ inline float gridFloat::getGridValue(long rw, long cl) {
 
 inline float gridFloat::getGridValue(double xcoord, double ycoord) {
     if((xcoord >= grid_bbox.get_xMin())&&(xcoord <= grid_bbox.get_xMax())&&(ycoord >= grid_bbox.get_yMin())&&(ycoord <= grid_bbox.get_yMax())) {
-		return getGridValue(getGridRow(ycoord), getGridCol(xcoord));
+        return getGridValue(getGridRow(ycoord), getGridCol(xcoord));
 	}
 	else {
 		return no_dat;
