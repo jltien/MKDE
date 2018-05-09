@@ -1,6 +1,10 @@
 #include "mkde.h"
 
 using namespace std;
+int xmin = 583022;
+int xmax = 722953;
+int ymin = 3364040;
+int ymax = 3514539;
 
 int main() {
     unordered_map<string, AnimalData *> *animals;
@@ -13,22 +17,25 @@ int main() {
     double t_step = 1.0;
     double pdf_thresh = pow(10.0, -14);
 
-    for (int i = 583022; i < 722953; i = i + 250) {
+    for (int i = xmin; i < xmax; i = i + 250) {
         grid_x.push_back(i);
     }
-    for (int i = 3364040; i < 3514539; i = i + 250) {
+    for (int i = ymin; i < ymax; i = i + 250) {
         grid_y.push_back(i);
     }
 
-    for (int i = 0; i < 10000/*animals->begin()->second->x.size()*/; i++) {
+    for (int i = 0; i < animals->begin()->second->x.size(); i++) {
         move_var.push_back(2.0);
         obs_var.push_back(0.1);
     }
 
-
     for (auto it = animals->begin(); it != animals->end(); ++it) {
-        mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+        gridFloat * rst;
+        updateTime(it->second);
+        withinBounds(it->second, 4320);
+        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
                grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh);
+
     }
 
     return 0;
@@ -76,6 +83,7 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             struct tm tm;
             const char *date_char = date_string.c_str();
             strptime(date_char, "%m/%d/%Y %H:%M", &tm);
+            time_t epoch = mktime(&tm);
             double x = stod(record[2]);
             double y = stod(record[3]);
             double z = stod(record[4]);
@@ -100,6 +108,7 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             new_animal->z.push_back(z);
             new_animal->t.push_back(t);
             new_animal->tm.push_back(tm);
+            new_animal->epoch_t.push_back(epoch);
             new_animal->ObsVarXY.push_back(obs_var_xy);
             new_animal->ObsVarZ.push_back(obs_var_z);
             new_animal->MoveVarXY.push_back(mov_var_xy);
@@ -115,13 +124,41 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
 
     infile.close();
 
-    // Populate the use vector for all the animals, with all trues except the last element
     for (auto it = animals->begin(); it != animals->end(); ++it) {
+
+        // Populate the use vector for all the animals, with all trues except the last element
         for (int i = 0; i < it->second->x.size() - 1; ++i) {
             it->second->use.push_back(true);
         }
         it->second->use.push_back(false);
+
+        // Find the min and max for x and y
+        double xmin = numeric_limits<double>::max();
+        double ymin = numeric_limits<double>::max();
+        double xmax = 0;
+        double ymax = 0;
+
+        for (int i = 0; i < it->second->x.size(); ++i) {
+            if (it->second->x[i] < xmin) {
+                xmin = it->second->x[i];
+            }
+            if (it->second->x[i] > xmax) {
+                xmax = it->second->x[i];
+            }
+            if (it->second->y[i] < ymin) {
+                ymin = it->second->y[i];
+            }
+            if (it->second->y[i] > ymax) {
+                ymax = it->second->y[i];
+            }
+        }
+        it->second->xmin = xmin;
+        it->second->xmax = xmax;
+        it->second->ymin = ymin;
+        it->second->ymax = ymax;
+        cout << "xmin: " << xmin << "xmax: " << xmax << "ymin: " << ymin << "ymax: " << ymax << endl;
     }
+
     return animals;
 }
 
@@ -133,7 +170,7 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
 // obsT, obsX, obsY: observed data
 // xyTable: a 2d array with pairs of (x,y) coordinates of cell centers
 // tMax, tStep, mvSig2xy, obsSig2: parameters
-gridFloat mkde2D(const vector<double> &T, const vector<double> &X,
+gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       const vector<double> &Y, const vector<bool> &use,
                       vector<double> &grid_x, vector<double> &grid_y,
                       vector<double> &move_var, vector<double> &obs_var,
@@ -154,6 +191,10 @@ gridFloat mkde2D(const vector<double> &T, const vector<double> &X,
     for (int i = 0; i < nX * nY; ++i) {
         mkde[i] = 0.0;
     }
+
+    gridFloat * rst = new gridFloat(num_grids++, nX, nY, xmin, ymin, xSz);
+    rst->setAllCellsToZero(true);
+
     // set up time variables
     double t0, t1, t, tOld, dt, alpha, totalT;
 
@@ -225,11 +266,12 @@ gridFloat mkde2D(const vector<double> &T, const vector<double> &X,
                             tmpDens = t_step * pXY / 2.0;
                         }
 
-                            //last term
+                        // last term
                         else if (doubleEquals(t, t1)) {
                             tmpDens = (t - tOld) * pXY / 2.0;
                         }
-                            // intermediate terms
+
+                        // intermediate term
                         else {
                             tmpDens = t_step * pXY;
                         }
@@ -237,6 +279,7 @@ gridFloat mkde2D(const vector<double> &T, const vector<double> &X,
                         long kk;
                         kk = getLinearIndex(i1, i2, 0, nX, nY);
                         mkde[kk] = mkde[kk] + tmpDens;
+                        rst->addValueToGridCell(eX, eY, tmpDens);
                     }
                 }
 
@@ -256,37 +299,26 @@ gridFloat mkde2D(const vector<double> &T, const vector<double> &X,
     }
 
     double maxDens = 0.0, sumDens = 0.0;
-    long kk;
-/*    for (int i1 = 0; i1 < nX; i1++) {
-        for (int i2 = 0; i2 < nY; i2++) {
-            kk = getLinearIndex(i1, i2, 0, nX, nY);
 
-            mkde[kk] = mkde[kk] / totalT;
-            if (mkde[kk] > maxDens) {
-                maxDens = mkde[kk];
+    for (double eX = xmin; eX < xmax; eX=eX+250) {
+        for (double eY = ymin; eY < ymax; eY=eY+250) {
+            if (rst->getGridValue(eX, eY) != FLT_NO_DATA_VALUE) {
+                rst->setGridValue(eX, eY, rst->getGridValue(eX, eY) / totalT);
+                if (rst->getGridValue(eX, eY) > maxDens) {
+                    maxDens = rst->getGridValue(eX, eY);
+                }
+                sumDens += rst->getGridValue(eX, eY);
             }
-            sumDens += mkde[kk];
-        }
-    }*/
-
-    gridFloat rst(num_grids++, nY, nX, nY - 1, 0, xSz);
-    for (double i1 = 0; i1 < nX; i1++) {
-        for (double i2 = 0; i2 < nY; i2++) {
-            rst.setGridValue(i1, i2, rst.getGridValue(i1, i2) / totalT);
-
-            if (rst.getGridValue(i1, i2) > maxDens) {
-                maxDens = rst.getGridValue(i1, i2);
-            }
-            sumDens += rst.getGridValue(i1, i2);
         }
     }
-
     cout << "\tMaximum voxel density = " << maxDens << endl;
     cout << "\tSum of voxel densities = " << sumDens << endl;
     cout << "2D MKDE Computation: DONE" << endl;
-
+    rst->printESRIascii("raster_test.asc");
     return rst;
+
 }
+
 
 /*
 vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
@@ -548,5 +580,28 @@ bool isMachineBigEndian(void) {
         return false;
     } else {
         return true;
+    }
+}
+
+/*****************************************************************************
+ * Helper functions to check whether the time is within the bounds we're
+ * interested in
+ *****************************************************************************/
+void withinBounds(AnimalData * animal, long minutes) {
+    int bound = minutes * 60;
+    for (int i = 1; i < animal->t.size(); i++) {
+        if (animal->epoch_t[i] - animal->epoch_t[i - 1] >= bound) {
+            animal->use[i] = false;
+            animal->use[i - 1] = false;
+        }
+    }
+}
+
+/*****************************************************************************
+ * Helper functions to adjust time relative to the first observation time.
+ *****************************************************************************/
+void updateTime(AnimalData * animal) {
+    for (int i = 0; i < animal->epoch_t.size(); i++) {
+        animal->epoch_t[i] = animal->epoch_t[i] - animal->epoch_t[0];
     }
 }

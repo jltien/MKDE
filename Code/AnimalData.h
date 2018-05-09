@@ -10,11 +10,16 @@ using namespace std;
 struct AnimalData {
 public:
     string id;
+    double xmin;
+    double xmax;
+    double ymin;
+    double ymax;
     vector<double> x;
     vector<double> y;
     vector<double> z;
     vector<double> t; // minutes elapsed
     vector<struct tm> tm;
+    vector<time_t> epoch_t;
     vector<bool> use;
     vector<double> ObsVarXY;
     vector<double> ObsVarZ;

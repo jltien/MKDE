@@ -18,7 +18,7 @@ const double MY_EPS = 0.00000001;
 
 unordered_map<string, AnimalData *> *fileRead(const char *in_filename);
 
-gridFloat mkde2D(const vector<double> &T, const vector<double> &X,
+gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       const vector<double> &Y, const vector<bool> &use,
                       vector<double> &grid_x, vector<double> &grid_y,
                       vector<double> &move_var, vector<double> &obs_var,
@@ -34,6 +34,8 @@ double integrateNormal(double x0, double x1, double mu, double sigma);
 double pnorm(double x, double mu, double sigma);
 bool isMachineBigEndian();
 inline bool doubleEquals(double a, double b);
+void withinBounds(AnimalData * animal, long minutes);
+void updateTime(AnimalData * animal);
 
 inline bool doubleEquals(double a, double b) {
     return fabs(a - b) < MY_EPS;
