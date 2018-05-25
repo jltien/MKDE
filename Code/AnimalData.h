@@ -14,6 +14,8 @@ public:
     double xmax;
     double ymin;
     double ymax;
+    double zmin;
+    double zmax;
     vector<double> x;
     vector<double> y;
     vector<double> z;
@@ -38,6 +40,27 @@ public:
         vector<double> * ObsVarZ = new vector<double>();
         vector<double> * MoveVarXY = new vector<double>();
         vector<double> * MoveVarZ = new vector<double>();
+    }
+};
+
+struct gridFloat3D {
+public:
+    vector<gridFloat *> xy_grids;
+    long zgridsize;
+    // gridFloat zmin;
+    // gridFloat zmax;
+    double zmin;
+    double zmax;
+    double zsize;
+
+    gridFloat3D(double zmn, double zmx, double zsz) {
+        zmin = zmn;
+        zmax = zmx;
+        zsize = zsz;
+    }
+    double getGridValue(double eX, double eY, double eZ) {
+        int index = eZ/zsize;
+    return xy_grids[index]->getGridValue(eX, eY);
     }
 };
 #endif //ANIMALDATA_H

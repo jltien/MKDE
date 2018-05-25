@@ -1,43 +1,96 @@
 #include "mkde.h"
 
 using namespace std;
+/*
 int xmin = 583022;
 int xmax = 722953;
 int ymin = 3364040;
 int ymax = 3514539;
-
+*/
 int main() {
     unordered_map<string, AnimalData *> *animals;
     animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
 
     vector<double> grid_x;
     vector<double> grid_y;
+    vector<double> grid_z;
     vector<double> move_var;
     vector<double> obs_var;
+    gridFloat * rst;
+
     double t_step = 1.0;
     double pdf_thresh = pow(10.0, -14);
 
-    for (int i = xmin; i < xmax; i = i + 250) {
+    vector<double> t_step3d;
+    vector<double> pdf_thresh3d;
+
+    // find the lowest and highest x, y, z for all animals
+    double xmin = numeric_limits<double>::max();
+    double xmax = 0;
+    double ymin = numeric_limits<double>::max();
+    double ymax = 0;
+    double zmin = numeric_limits<double>::max();
+    double zmax = 0;
+
+    for (auto it = animals->begin(); it != animals->end(); ++it) {
+        if (it->second->xmin < xmin) {
+            xmin = it->second->xmin;
+        }
+        if (it->second->xmax > xmax) {
+            xmax = it->second->xmax;
+        }
+        if (it->second->ymin < ymin) {
+            ymin = it->second->ymin;
+        }
+        if (it->second->ymax > ymax) {
+            ymax = it->second->ymax;
+        }
+        if (it->second->zmin < zmin) {
+            zmin = it->second->zmin;
+        }
+        if (it->second->zmax > zmax) {
+            zmax = it->second->zmax;
+        }
+    }
+
+    // set the x, y, z grids
+    for (double i = xmin - 2000; i < xmax + 2000; i = i + 250) {
         grid_x.push_back(i);
     }
-    for (int i = ymin; i < ymax; i = i + 250) {
+    for (double i = ymin - 2000; i < ymax + 2000; i = i + 250) {
         grid_y.push_back(i);
     }
 
+    for (double i = 0; i < zmax + 2000; i = i + 250) {
+        grid_z.push_back(i);
+    }
     for (int i = 0; i < animals->begin()->second->x.size(); i++) {
         move_var.push_back(2.0);
         obs_var.push_back(0.1);
+        t_step3d.push_back(1.0);
+        pdf_thresh3d.push_back(pow(10.0, -14));
     }
+
+    gridFloat * high = new gridFloat(1, grid_x.size(), grid_y.size(), xmin, ymin, grid_x[1]-grid_x[0]);
+
+    high->setAllCellsTo(zmax);
+    gridFloat * low = new gridFloat(0, grid_x.size(), grid_y.size(), xmin, ymin, grid_x[1]-grid_x[0]);
+
+    low->setAllCellsToZero(true);
 
     for (auto it = animals->begin(); it != animals->end(); ++it) {
-        gridFloat * rst;
         updateTime(it->second);
         withinBounds(it->second, 4320);
-        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
-               grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh);
+/*        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+               grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh); */
 
+        mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
+                      grid_x, grid_y, grid_z, *low, *high, it->second->MoveVarXY,
+                      it->second->MoveVarZ, it->second->ObsVarXY, it->second->ObsVarZ, t_step3d,
+                      pdf_thresh3d);
     }
 
+    rst->printESRIascii("raster_test.asc");
     return 0;
 }
 
@@ -135,8 +188,10 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         // Find the min and max for x and y
         double xmin = numeric_limits<double>::max();
         double ymin = numeric_limits<double>::max();
+        double zmin = numeric_limits<double>::max();
         double xmax = 0;
         double ymax = 0;
+        double zmax = 0;
 
         for (int i = 0; i < it->second->x.size(); ++i) {
             if (it->second->x[i] < xmin) {
@@ -151,11 +206,19 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             if (it->second->y[i] > ymax) {
                 ymax = it->second->y[i];
             }
+            if (it->second->z[i] < zmin) {
+                zmin =it->second->z[i];
+            }
+            if (it->second->z[i] > zmax) {
+                zmax = it->second->z[i];
+            }
         }
         it->second->xmin = xmin;
         it->second->xmax = xmax;
         it->second->ymin = ymin;
         it->second->ymax = ymax;
+        it->second->zmin = zmin;
+        it->second->zmax = zmax;
     }
 
     return animals;
@@ -183,6 +246,10 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
     int nY = grid_y.size();
     double xSz = grid_x[1] - grid_x[0];
     double ySz = grid_y[1] - grid_y[0];
+    double xmin = grid_x[0];
+    double ymin = grid_y[0];
+    double xmax = grid_x[grid_x.size() - 1];
+    double ymax = grid_y[grid_y.size() - 1];
 
     // arrays for MKDE computation
     double *ydens = (double *) malloc(nY * sizeof(double)); // to precompute y
@@ -299,8 +366,8 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
 
     double maxDens = 0.0, sumDens = 0.0;
 
-    for (double eX = xmin; eX < xmax; eX=eX+250) {
-        for (double eY = ymin; eY < ymax; eY=eY+250) {
+    for (double eX = xmin; eX < xmax; eX = eX + xSz) {
+        for (double eY = ymin; eY < ymax; eY = eY + ySz) {
             if (rst->getGridValue(eX, eY) != FLT_NO_DATA_VALUE) {
                 rst->setGridValue(eX, eY, rst->getGridValue(eX, eY) / totalT);
                 if (rst->getGridValue(eX, eY) > maxDens) {
@@ -313,17 +380,15 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
     cout << "\tMaximum voxel density = " << maxDens << endl;
     cout << "\tSum of voxel densities = " << sumDens << endl;
     cout << "2D MKDE Computation: DONE" << endl;
-    rst->printESRIascii("raster_test.asc");
     return rst;
 
 }
 
 
-/*
 vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
                              vector<double> &Y, vector<double> &Z, vector<bool> &use,
                              vector<double> &xgrid, vector<double> &ygrid, vector<double> &zgrid,
-                             SEXP zMinMatrix, SEXP zMaxMatrix, vector<double> &msig2xy,
+                             gridFloat zMin, gridFloat zMax, vector<double> &msig2xy,
                              vector<double> &msig2z, vector<double> &osig2xy, vector<double> &osig2z,
                              vector<double> &t_step, vector<double> &pdf_thresh) {
 
@@ -337,10 +402,12 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
     double xSz = xgrid[1] - xgrid[0];
     double ySz = ygrid[1] - ygrid[0];
     double zSz = zgrid[1] - zgrid[0];
-
-    // pysical constraints in z-dimension
-    Rcpp::NumericMatrix zMin(zMinMatrix);  // lower z-limit at each (x,y)
-    Rcpp::NumericMatrix zMax(zMaxMatrix);  // upper z-limit at each (x,y)
+    double xmin = xgrid[0];
+    double xmax = xgrid[xgrid.size() - 1];
+    double ymin = ygrid[0];
+    double ymax = ygrid[ygrid.size() - 1];
+    double zmin = zgrid[0];
+    double zmax = zgrid[zgrid.size() - 1];
 
     // arrays for MKDE computation
     double *ydens = (double *) malloc(nY * sizeof(double)); // To precompute Y
@@ -348,6 +415,16 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
     vector<double> mkde(nVoxels);
     for (long i = 0; i < nVoxels; i++) {
         mkde[i] = 0.0;
+    }
+
+    // Create a vector of GridFloats and initializing GridFloat3D
+    gridFloat3D * rst3d = new gridFloat3D(zmin, zmax, zSz);
+
+    for (double i = zmin; i < zmax; i = i +zSz) {
+        int j = 0;
+        gridFloat *rst = new gridFloat(j++, nX, nY, xmin, ymin, xSz);
+        rst->setAllCellsToZero(true);
+        rst3d->xy_grids.push_back(rst);
     }
 
     // set up time variables
@@ -419,18 +496,15 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
                     for (int i2 = std::max(0, i2k - halo2); i2 < std::min(nY, i2k + halo2); i2++) { // y-dimension
                         double voxy = ygrid[i2]; // voxel y
                         // get the range of indexes and coordinates based on the physical boundaries
-                        int i3lo = std::max(0, getLowerCellIndex(zMin(i1, i2), zgrid[0], zSz));
-                        int i3hi = std::min(nZ, getUpperCellIndex(zMax(i1, i2), zgrid[0], zSz) +
+                        int i3lo = std::max(0, getLowerCellIndex(/*zMin.getGridValue(xmin + (double)i1, ymin + (double)i2)*/ 0, zgrid[0], zSz));
+                        int i3hi = std::min(nZ, getUpperCellIndex(/*zMax.getGridValue(xmin + (double)i1, ymin + (double)i2)*/ 5000, zgrid[0], zSz) +
                                                 1); // add 1 because less than
                         double loZ = indexToCellCenterCoord(i3lo, zgrid[0], zSz) - 0.5 * zSz;
                         double hiZ = indexToCellCenterCoord(i3hi - 1, zgrid[0], zSz) + 0.5 * zSz;
                         // Reflect E[Z] about the lower and upper boundaries
                         double loReflZ = 2.0 * loZ - eZ;
                         double hiReflZ = 2.0 * hiZ - eZ;
-
-                        for (int i3 = std::max(i3lo, i3k - halo3);
-                             i3 < std::min(i3hi, i3k + halo3); i3++) { // z-dimension
-
+                        for (int i3 = std::max(i3lo, i3k - halo3); i3 < std::min(i3hi, i3k + halo3); i3++) { // z-dimension
                             int th_id = omp_get_thread_num();
                             // set up for reflection
                             // only compute if the expected location is within distance of boundary
@@ -457,9 +531,15 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
                             }
 
                             // Add contribution to voxel (removed Kahan summation for now)
-                            long kk = getLinearIndex(i1, i2, i3, nX, nY);
+/*                            long kk = getLinearIndex(i1, i2, i3, nX, nY);
                             mkde[kk] += tmpDens;
+                            W += tmpDens; */
+
+                            int index = eZ/zSz;
+                            rst3d->xy_grids[index]->addValueToGridCell(eX, eY, tmpDens);
                             W += tmpDens;
+
+
                         }
                     }
                 }
@@ -482,7 +562,7 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
 
     // divide by totalT
     double maxDens = 0.0, sumDens = 0.0;
-    long kk;
+/*    long kk;
     for (int i1 = 0; i1 < nX; i1++) {
         for (int i2 = 0; i2 < nY; i2++) {
             for (int i3 = 0; i3 < nZ; i3++) {
@@ -494,7 +574,24 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
                 sumDens += mkde[kk];
             }
         }
+    } */
+
+
+    for (double eX = xmin; eX < xmax; eX = eX + xSz) {
+        for (double eY = ymin; eY < ymax; eY = eY + ySz) {
+            for (long eZ = zmin; eZ < zmax; eZ = eZ +zSz) {
+                int index = eZ/zSz;
+                if (rst3d->xy_grids[index]->getGridValue(eX, eY) != FLT_NO_DATA_VALUE) {
+                    rst3d->xy_grids[index]->setGridValue(eX, eY, rst3d->xy_grids[index]->getGridValue(eX, eY) / W);
+                    if (rst3d->xy_grids[index]->getGridValue(eX, eY) > maxDens) {
+                        maxDens = rst3d->xy_grids[index]->getGridValue(eX, eY);
+                    }
+                    sumDens += rst3d->xy_grids[index]->getGridValue(eX, eY);
+                }
+            }
+        }
     }
+
     cout << "\tMaximum voxel density = " << maxDens << std::endl;
     cout << "\tSum of voxel densities = " << sumDens << std::endl;
     cout << "3D MKDE Computation: DONE" << std::endl;
@@ -502,7 +599,6 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
     // RETURN DENSITY HERE
     return mkde;
 }
-*/
 
 /*****************************************************************************
  * Helper functions to translate between cell or voxel indexes and coordinates

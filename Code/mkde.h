@@ -1,5 +1,12 @@
-#ifndef MKDE_H
-#define MKDE_H
+#ifndef _MKDE_H
+#define _MKDE_H
+
+#ifdef _OPENMP
+    #include <omp.h>
+#else
+    #define omp_get_num_threads() 1
+    #define omp_get_thread_num() 0
+#endif
 
 #include <fstream>
 #include <iostream>
@@ -23,6 +30,13 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       vector<double> &grid_x, vector<double> &grid_y,
                       vector<double> &move_var, vector<double> &obs_var,
                       double t_step, double pdf_thresh);
+
+vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
+                             vector<double> &Y, vector<double> &Z, vector<bool> &use,
+                             vector<double> &xgrid, vector<double> &ygrid, vector<double> &zgrid,
+                             gridFloat zMin, gridFloat zMax, vector<double> &msig2xy,
+                             vector<double> &msig2z, vector<double> &osig2xy, vector<double> &osig2z,
+                             vector<double> &t_step, vector<double> &pdf_thresh);
 
 int coordToIndex(double x, double minGridCoord, double cellSz);
 double univariateNormalDensityThreshold(double p, double sigma2);
