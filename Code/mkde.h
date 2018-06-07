@@ -19,11 +19,11 @@
 #include <random>
 #include "Raster/raster.cpp"
 #include "AnimalData.h"
+#include "Raster/ioFunctions.cpp"
 
 const double MY_PI = 3.141592653589793;
 const double MY_EPS = 0.00000001;
 
-unordered_map<string, AnimalData *> *fileRead(const char *in_filename);
 
 gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       const vector<double> &Y, const vector<bool> &use,
@@ -31,7 +31,7 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       vector<double> &move_var, vector<double> &obs_var,
                       double t_step, double pdf_thresh);
 
-vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
+gridFloat3D * mkde3dGridv02(vector<double> &T, vector<double> &X,
                              vector<double> &Y, vector<double> &Z, vector<bool> &use,
                              vector<double> &xgrid, vector<double> &ygrid, vector<double> &zgrid,
                              gridFloat zMin, gridFloat zMax, vector<double> &msig2xy,
@@ -55,4 +55,9 @@ inline bool doubleEquals(double a, double b) {
     return fabs(a - b) < MY_EPS;
 }
 
+
+// IO Functions
+unordered_map<string, AnimalData *> *fileRead(const char *in_filename);
+void writeMKDE3DtoVTK(vector<double> xgrid, vector<double> ygrid, vector<double> zgrid,
+                      gridFloat3D * rst3d, char * filename, char * description);
 #endif //MKDE_H

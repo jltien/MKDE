@@ -381,10 +381,10 @@ gridFloat::gridFloat(const gridFloat & inGrid) : grid_bbox(inGrid.grid_bbox) {
 ------------------------------------------------------------------------------*/
 gridFloat::~gridFloat() {
     long i;
-    for (i = 0; i < num_rows; i++) {
+/*    for (i = 0; i < num_rows; i++) {
         delete [] data[i];
         data[i]  = NULL;
-    }
+    }*/
     delete [] data;
     data = NULL;
     num_rows = 0;

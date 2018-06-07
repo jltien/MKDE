@@ -17,6 +17,7 @@ int main() {
     vector<double> move_var;
     vector<double> obs_var;
     gridFloat * rst;
+    gridFloat3D * rst3d;
 
     double t_step = 1.0;
     double pdf_thresh = pow(10.0, -14);
@@ -78,151 +79,25 @@ int main() {
 
     low->setAllCellsToZero(true);
 
-    for (auto it = animals->begin(); it != animals->end(); ++it) {
+  //  for (auto it = animals->begin(); it != animals->end(); ++it) {
+        auto it = animals->begin();
         updateTime(it->second);
         withinBounds(it->second, 4320);
-/*        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
-               grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh); */
+        /*rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+               grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh);
+        */
 
-        mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
+        rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
                       grid_x, grid_y, grid_z, *low, *high, it->second->MoveVarXY,
                       it->second->MoveVarZ, it->second->ObsVarXY, it->second->ObsVarZ, t_step3d,
                       pdf_thresh3d);
-    }
+        writeMKDE3DtoVTK(it->second->x, it->second->y, it->second->z, rst3d, "raster3d_test.vtk", "test data");
+//    }
 
-    rst->printESRIascii("raster_test.asc");
+    //rst->printESRIascii("raster_test.asc");
     return 0;
 }
 
-/*****************************************************************************
- * Takes an animal data file with an id(string), x(double), y(double), and
- * z(double) and parses the data into a vector of vector of the data. The outer
- * vector's elements are unique animals and the inner vector has a single
- * animal's data entries. Returns true if successful, false if unsuccessful.
- *****************************************************************************/
-unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
-    unordered_map<string, AnimalData *> *animals = new unordered_map<string, AnimalData *>();
-    ifstream infile(in_filename);   // Initialize the file stream
-    bool have_header = true;
-    AnimalData *new_animal;
-    static int num_grid = 0;
-
-    // Keep reading lines until the end of file is reached
-    while (infile) {
-        string s;
-
-        if (!getline(infile, s)) break;
-
-        // Skip the file header
-        if (have_header) {
-            have_header = false;
-            continue;
-        }
-
-        istringstream ss(s);
-        vector<string> record;
-
-        // Parses each individual line of data for each data entry
-        while (ss) {
-            string next;
-
-            if (!getline(ss, next, '\t')) break;
-            record.push_back(next);
-            if (record.size() != 10) {
-                continue;
-            }
-            string id = record[0];
-            string date_string = record[1];
-            struct tm tm;
-            const char *date_char = date_string.c_str();
-            strptime(date_char, "%m/%d/%Y %H:%M", &tm);
-            time_t epoch = mktime(&tm);
-            double x = stod(record[2]);
-            double y = stod(record[3]);
-            double z = stod(record[4]);
-            double t = stod(record[5]);
-            double obs_var_xy = stod(record[6]);
-            double obs_var_z = stod(record[7]);
-            double mov_var_xy = stod(record[8]);
-            double mov_var_z = stod(record[9]);
-
-            unordered_map<string, AnimalData *>::const_iterator exists = animals->find(id);
-
-            // A new animal has been encountered
-            if (exists == animals->end()) {
-                new_animal = new AnimalData(id);
-                animals->insert({id, new_animal});
-                exists = animals->find(id);
-            }
-
-            new_animal = exists->second;
-            new_animal->x.push_back(x);
-            new_animal->y.push_back(y);
-            new_animal->z.push_back(z);
-            new_animal->t.push_back(t);
-            new_animal->tm.push_back(tm);
-            new_animal->epoch_t.push_back(epoch);
-            new_animal->ObsVarXY.push_back(obs_var_xy);
-            new_animal->ObsVarZ.push_back(obs_var_z);
-            new_animal->MoveVarXY.push_back(mov_var_xy);
-            new_animal->MoveVarZ.push_back(mov_var_z);
-        }
-    }
-
-    // Failed to read the file
-    if (!infile.eof()) {
-        cerr << "FAILED TO READ " << in_filename << endl;
-        return nullptr;
-    }
-
-    infile.close();
-
-    for (auto it = animals->begin(); it != animals->end(); ++it) {
-
-        // Populate the use vector for all the animals, with all trues except the last element
-        for (int i = 0; i < it->second->x.size() - 1; ++i) {
-            it->second->use.push_back(true);
-        }
-        it->second->use.push_back(false);
-
-        // Find the min and max for x and y
-        double xmin = numeric_limits<double>::max();
-        double ymin = numeric_limits<double>::max();
-        double zmin = numeric_limits<double>::max();
-        double xmax = 0;
-        double ymax = 0;
-        double zmax = 0;
-
-        for (int i = 0; i < it->second->x.size(); ++i) {
-            if (it->second->x[i] < xmin) {
-                xmin = it->second->x[i];
-            }
-            if (it->second->x[i] > xmax) {
-                xmax = it->second->x[i];
-            }
-            if (it->second->y[i] < ymin) {
-                ymin = it->second->y[i];
-            }
-            if (it->second->y[i] > ymax) {
-                ymax = it->second->y[i];
-            }
-            if (it->second->z[i] < zmin) {
-                zmin =it->second->z[i];
-            }
-            if (it->second->z[i] > zmax) {
-                zmax = it->second->z[i];
-            }
-        }
-        it->second->xmin = xmin;
-        it->second->xmax = xmax;
-        it->second->ymin = ymin;
-        it->second->ymax = ymax;
-        it->second->zmin = zmin;
-        it->second->zmax = zmax;
-    }
-
-    return animals;
-}
 
 /*****************************************************************************
  * Functions that calculate MKDEs for a set of grid cells
@@ -253,10 +128,6 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
 
     // arrays for MKDE computation
     double *ydens = (double *) malloc(nY * sizeof(double)); // to precompute y
-    vector<double> mkde(nX * nY);
-    for (int i = 0; i < nX * nY; ++i) {
-        mkde[i] = 0.0;
-    }
 
     gridFloat * rst = new gridFloat(num_grids++, nX, nY, xmin, ymin, xSz);
     rst->setAllCellsToZero(true);
@@ -342,9 +213,6 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                             tmpDens = t_step * pXY;
                         }
 
-                        long kk;
-                        kk = getLinearIndex(i1, i2, 0, nX, nY);
-                        mkde[kk] = mkde[kk] + tmpDens;
                         rst->addValueToGridCell(eX, eY, tmpDens);
                     }
                 }
@@ -385,7 +253,7 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
 }
 
 
-vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
+gridFloat3D * mkde3dGridv02(vector<double> &T, vector<double> &X,
                              vector<double> &Y, vector<double> &Z, vector<bool> &use,
                              vector<double> &xgrid, vector<double> &ygrid, vector<double> &zgrid,
                              gridFloat zMin, gridFloat zMax, vector<double> &msig2xy,
@@ -412,17 +280,13 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
     // arrays for MKDE computation
     double *ydens = (double *) malloc(nY * sizeof(double)); // To precompute Y
     double *zdens = (double *) malloc(nZ * sizeof(double)); // To precompute z
-    vector<double> mkde(nVoxels);
-    for (long i = 0; i < nVoxels; i++) {
-        mkde[i] = 0.0;
-    }
 
     // Create a vector of GridFloats and initializing GridFloat3D
-    gridFloat3D * rst3d = new gridFloat3D(zmin, zmax, zSz);
+    gridFloat3D * rst3d = new gridFloat3D(xmin, ymin, zmin, xmax, ymax, zmax, xSz, ySz, zSz);
 
-    for (double i = zmin; i < zmax; i = i +zSz) {
-        int j = 0;
-        gridFloat *rst = new gridFloat(j++, nX, nY, xmin, ymin, xSz);
+    int array_num = 0;
+    for (double i = 0; i < zmax/zSz; i++) {
+        gridFloat *rst = new gridFloat(array_num++, nX, nY, xmin, ymin, xSz);
         rst->setAllCellsToZero(true);
         rst3d->xy_grids.push_back(rst);
     }
@@ -530,16 +394,8 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
                                 tmpDens = t_step[0] * pXYZ;
                             }
 
-                            // Add contribution to voxel (removed Kahan summation for now)
-/*                            long kk = getLinearIndex(i1, i2, i3, nX, nY);
-                            mkde[kk] += tmpDens;
-                            W += tmpDens; */
-
-                            int index = eZ/zSz;
-                            rst3d->xy_grids[index]->addValueToGridCell(eX, eY, tmpDens);
+                            rst3d->addValueToGridCell(eX, eY, eZ, tmpDens);
                             W += tmpDens;
-
-
                         }
                     }
                 }
@@ -562,31 +418,15 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
 
     // divide by totalT
     double maxDens = 0.0, sumDens = 0.0;
-/*    long kk;
-    for (int i1 = 0; i1 < nX; i1++) {
-        for (int i2 = 0; i2 < nY; i2++) {
-            for (int i3 = 0; i3 < nZ; i3++) {
-                kk = getLinearIndex(i1, i2, i3, nX, nY);
-                mkde[kk] = mkde[kk] / W;
-                if (mkde[kk] > maxDens) {
-                    maxDens = mkde[kk];
-                }
-                sumDens += mkde[kk];
-            }
-        }
-    } */
-
-
     for (double eX = xmin; eX < xmax; eX = eX + xSz) {
         for (double eY = ymin; eY < ymax; eY = eY + ySz) {
-            for (long eZ = zmin; eZ < zmax; eZ = eZ +zSz) {
-                int index = eZ/zSz;
-                if (rst3d->xy_grids[index]->getGridValue(eX, eY) != FLT_NO_DATA_VALUE) {
-                    rst3d->xy_grids[index]->setGridValue(eX, eY, rst3d->xy_grids[index]->getGridValue(eX, eY) / W);
-                    if (rst3d->xy_grids[index]->getGridValue(eX, eY) > maxDens) {
-                        maxDens = rst3d->xy_grids[index]->getGridValue(eX, eY);
+            for (long eZ = zmin ;eZ < zmax; eZ = eZ + zSz) {
+                if (rst3d->getGridValue(eX, eY, eZ) != FLT_NO_DATA_VALUE) {
+                    rst3d->setGridValue(eX, eY, eZ, rst3d->getGridValue(eX, eY, eZ) / W);
+                    if (rst3d->getGridValue(eX, eY, eZ) > maxDens) {
+                        maxDens = rst3d->getGridValue(eX, eY, eZ);
                     }
-                    sumDens += rst3d->xy_grids[index]->getGridValue(eX, eY);
+                    sumDens += rst3d->getGridValue(eX, eY, eZ);
                 }
             }
         }
@@ -597,7 +437,8 @@ vector<double> mkde3dGridv02(vector<double> &T, vector<double> &X,
     cout << "3D MKDE Computation: DONE" << std::endl;
 
     // RETURN DENSITY HERE
-    return mkde;
+    //SEG FAULT WHEN
+    return rst3d;
 }
 
 /*****************************************************************************
