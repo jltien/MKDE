@@ -1,4 +1,3 @@
-
 /*****************************************************************************
  * Takes an animal data file with an id(string), x(double), y(double), and
  * z(double) and parses the data into a vector of vector of the data. The outer
@@ -131,11 +130,14 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
 
 
 
-void writeMKDE3DtoVTK(vector<double> xgrid, vector<double> ygrid, vector<double> zgrid,
+/*****************************************************************************
+ * Writes MKDE3D to a VTK file format with the name of the file being fname
+ *****************************************************************************/
+void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
                       gridFloat3D * rst3d, char * fname, char * descr) {
-    int nX = (long)xgrid.size();
-    int nY = (long)ygrid.size();
-    int nZ = (long)zgrid.size();
+    int nX = xgrid.size();
+    int nY = ygrid.size();
+    int nZ = zgrid.size();
 
     long nPoints = (long)nX*nY*nZ, ijk = 0;
     char * fnm = new char[strlen(fname)+1];
@@ -166,27 +168,13 @@ void writeMKDE3DtoVTK(vector<double> xgrid, vector<double> ygrid, vector<double>
     vtkfile << std::endl << "POINT_DATA " << nPoints << std::endl;
     vtkfile << "SCALARS density float 1" << std::endl;
     vtkfile << "LOOKUP_TABLE densityTable" << std::endl;
-/*    for (int k = 0; k < nZ; k++) {
-        for (int j = 0; j < nY; j++) {
-            for (int i = 0; i < nX; i++) {
-                ijk = getLinearIndex(i, j, k, nX, nY);
-                densTmp = d[ijk];
-                if (std::isnan(densTmp)) {
-                    vtkfile << "0.0000000000000" << std::endl;
-                } else {
-                    // possibly use std::scientific or #include <iomanip> with std::setprecision(12)
-                    vtkfile << densTmp << std::endl;
-                }
-            }
-        }
-    } */
     for (double eZ = rst3d->zmin; eZ < rst3d->zmax; eZ = eZ + rst3d->zsize) {
         for (double eY = rst3d->ymin; eY < rst3d->ymax; eY = eY + rst3d->ysize) {
             for (long eX = rst3d->xmin ;eX < rst3d->xmax; eX = eX + rst3d->xsize) {
                 if (rst3d->getGridValue(eX, eY, eZ) == FLT_NO_DATA_VALUE) {
                     vtkfile << "0.0000000000000" << std::endl;
                 } else {
-                        vtkfile << rst3d->getGridValue(eX, eY, eZ);
+                        vtkfile << rst3d->getGridValue(eX, eY, eZ) << std::endl;
                 }
             }
         }
@@ -207,26 +195,24 @@ void writeMKDE3DtoVTK(vector<double> xgrid, vector<double> ygrid, vector<double>
     vtkfile.close();
     return;
 }
+
+
 /*
 // write to GRASS GIS 3D ASCII raster file
-SEXP writeMKDE3DtoGRASS(SEXP xgrid, SEXP ygrid, SEXP zgrid, SEXP density, SEXP filename, SEXP nodata) {
-    Rcpp::NumericVector xGrid(xgrid); // cell centers in the x-dimension
-    Rcpp::NumericVector yGrid(ygrid); // cell centers in the y-dimension
-    Rcpp::NumericVector zGrid(zgrid); // cell centers in the z-dimension
-    int nX = (long)xGrid.length();
-    int nY = (long)yGrid.length();
-    int nZ = (long)zGrid.length();
+void writeMKDE3DtoGRASS(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
+                        const vector<double> &density, char * fname, char * nv) {
+    int nX = xgrid.size();
+    int nY = ygrid.size();
+    int nZ = zgrid.size();
     long ijk = 0;
     double xSz = xGrid[1] - xGrid[0];
     double ySz = yGrid[1] - yGrid[0];
     double zSz = zGrid[1] - zGrid[0];
     double densTmp;
-    std::vector<double> d = Rcpp::as<std::vector<double>>(density);
     std::string fname = Rcpp::as<std::string>(filename);
     char * fnm = new char[fname.size()+1];
     fnm[fname.size()] = 0;
     memcpy(fnm, fname.c_str(), fname.size());
-    std::string nv = Rcpp::as<std::string>(nodata);
 
 // open file
     std::ofstream r3file;
@@ -271,8 +257,11 @@ SEXP writeMKDE3DtoGRASS(SEXP xgrid, SEXP ygrid, SEXP zgrid, SEXP density, SEXP f
     return Rcpp::wrap(1);
 }
 
+
+
+/*
 // write to XDMF file
-SEXP writeMKDE3DtoXDMF(SEXP xgrid, SEXP ygrid, SEXP zgrid, SEXP density, SEXP filenameXDMF, SEXP filenameDAT) {
+SEXP writeMKDE3DtoXDMF(vector<double> xgrid, vector<double> ygrid, vector<double> zgrid, gridFloat3D * density, char * filenameXDMF, char * filenameDAT) {
     Rcpp::NumericVector xGrid(xgrid); // cell centers in the x-dimension
     Rcpp::NumericVector yGrid(ygrid); // cell centers in the y-dimension
     Rcpp::NumericVector zGrid(zgrid); // cell centers in the z-dimension
@@ -376,6 +365,9 @@ SEXP writeMKDE3DtoXDMF(SEXP xgrid, SEXP ygrid, SEXP zgrid, SEXP density, SEXP fi
 // done...
     return Rcpp::wrap(1);
 }
+
+
+
 
 SEXP writeRasterToXDMF(SEXP xgrid, SEXP ygrid, SEXP rast, SEXP filenameXDMF, SEXP filenameDAT) {
     Rcpp::NumericVector xGrid(xgrid); // cell centers in the x-dimension

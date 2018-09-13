@@ -31,12 +31,12 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       vector<double> &move_var, vector<double> &obs_var,
                       double t_step, double pdf_thresh);
 
-gridFloat3D * mkde3dGridv02(vector<double> &T, vector<double> &X,
-                             vector<double> &Y, vector<double> &Z, vector<bool> &use,
-                             vector<double> &xgrid, vector<double> &ygrid, vector<double> &zgrid,
-                             gridFloat zMin, gridFloat zMax, vector<double> &msig2xy,
-                             vector<double> &msig2z, vector<double> &osig2xy, vector<double> &osig2z,
-                             vector<double> &t_step, vector<double> &pdf_thresh);
+gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
+                             const vector<double> &Y, const vector<double> &Z, const vector<bool> &use,
+                             const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
+                             const gridFloat * zMin, const gridFloat * zMax, const vector<double> &msig2xy,
+                             const vector<double> &msig2z, const vector<double> &osig2xy, const vector<double> &osig2z,
+                             const vector<double> &t_step, const vector<double> &pdf_thresh);
 
 int coordToIndex(double x, double minGridCoord, double cellSz);
 double univariateNormalDensityThreshold(double p, double sigma2);
@@ -58,6 +58,6 @@ inline bool doubleEquals(double a, double b) {
 
 // IO Functions
 unordered_map<string, AnimalData *> *fileRead(const char *in_filename);
-void writeMKDE3DtoVTK(vector<double> xgrid, vector<double> ygrid, vector<double> zgrid,
+void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
                       gridFloat3D * rst3d, char * filename, char * description);
 #endif //MKDE_H

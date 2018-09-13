@@ -286,6 +286,42 @@ class gridFloat {
         void printESRIbinary(char * filen);                          // print to ESRI BINARY raster
 };
 
+/*============================================================================*
+* A CLASS FOR 3D FLOATING-POINT RASTERS                                       *
+*============================================================================*/
+class gridFloat3D {
+public:
+    std::vector<gridFloat *> xy_grids;
+    long zgridsize;
+    // gridFloat zmin;
+    // gridFloat zmax;
+    double xmin;
+    double ymin;
+    double zmin;
+    double xmax;
+    double ymax;
+    double zmax;
+    double xsize;   // size of each cell
+    double ysize;
+    double zsize;
+    int xnum;       // number of cells
+    int ynum;
+    int znum;
+    long no_dat = -9999;
+
+   /*  gridFloat3D(double xmn, double ymn, double zmn, double xmx,
+                double ymx, double zmx, double xsz, double ysz, double zsz, double nX, double nY, double nZ); */
+    gridFloat3D(const std::vector<double> &xgrid, const std::vector<double> &ygrid, const std::vector<double> &zgrid);
+    ~gridFloat3D();
+
+    float getGridValue(double eX, double eY, double eZ);
+    void setGridValue(double xcoord, double ycoord, double zcoord, float val);
+    void addValueToGridCell(double eX, double eY, double zcoord, float val);
+    long getGridZ(double zcoord);
+};
+
+
+
 /*------------------------------------------------------------------------------
 - INLINE FUNCTIONS
 ------------------------------------------------------------------------------*/

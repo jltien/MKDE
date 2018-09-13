@@ -381,10 +381,10 @@ gridFloat::gridFloat(const gridFloat & inGrid) : grid_bbox(inGrid.grid_bbox) {
 ------------------------------------------------------------------------------*/
 gridFloat::~gridFloat() {
     long i;
-/*    for (i = 0; i < num_rows; i++) {
+    for (i = 0; i < num_rows; i++) {
         delete [] data[i];
         data[i]  = NULL;
-    }*/
+    }
     delete [] data;
     data = NULL;
     num_rows = 0;
@@ -914,4 +914,73 @@ void gridFloat::printESRIbinary(char * filen) {
     datout.close();
 }
 
+
+/*------------------------------------------------------------------------------
+* Constructor to make a 3d raster of no data values                            *
+------------------------------------------------------------------------------*/
+gridFloat3D::gridFloat3D(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid) {
+    xmin = xgrid[0];
+    xmax = xgrid[xgrid.size() - 1];
+    ymin = ygrid[0];
+    ymax = ygrid[ygrid.size() - 1];
+    zmin = zgrid[0];
+    zmax = zgrid[zgrid.size() - 1];
+    xsize = xgrid[1] - xgrid[0];
+    ysize = ygrid[1] - ygrid[0];
+    zsize = zgrid[1] - zgrid[0];
+    xnum = xgrid.size();
+    ynum = ygrid.size();
+    znum = zgrid.size();
+
+    int array_num = 0;
+    for (double i = 0; i < zmax / zsize; i++) {
+        gridFloat *rst = new gridFloat(array_num++, xnum, ynum, xmin, ymin, xsize);
+        rst->setAllCellsToZero(true);
+        this->xy_grids.push_back(rst);
+    }
+}
+
+gridFloat3D::~gridFloat3D() {
+    for (int i = 0; i < xy_grids.size(); i++) {
+        delete xy_grids[i];
+    }
+}
+
+float gridFloat3D::getGridValue(double eX, double eY, double eZ) {
+    if(getGridZ(eZ) < zmin || getGridZ(eZ) > zmax) {
+        return no_dat;
+    }
+    else {
+        return xy_grids[getGridZ(eZ)]->getGridValue(eX, eY);
+    }
+}
+
+void gridFloat3D::setGridValue(double xcoord, double ycoord, double zcoord, float val) {
+    if ((zcoord >= zmin)&&(zcoord <= zmax)) {
+        xy_grids[getGridZ(zcoord)]->setGridValue(xcoord, ycoord, val);
+    }
+    // else, do nothing
+}
+
+void gridFloat3D::addValueToGridCell(double eX, double eY, double zcoord, float val) {
+    if ((zcoord >= zmin)&&(zcoord <= zmax)) {
+        if (xy_grids[getGridZ(zcoord)]->getGridValue(eX, eY) != no_dat) {
+            xy_grids[getGridZ(zcoord)]->addValueToGridCell(eX, eY, val);
+        }
+        // no data is still no data
+    }
+    // else, do nothing
+}
+
+long gridFloat3D::getGridZ(double zcoord) {
+    // check to ensure point is in bounds
+    if ((zcoord >= zmin)&&(zcoord <= zmax)) {
+        return (long)(floor((zcoord - zmin)/zsize));
+    } else {
+        std::cerr << "Error in gridFloat3D::getGridZ(): query point out of bounds." << std::endl;
+        std::cerr << "Bounding box z min = " << zmin << "; bounding box z max = " << zmax << std::endl;
+        std::cerr << "Arg z coordinate = " << zcoord << std::endl;
+        exit(1);
+    }
+}
 

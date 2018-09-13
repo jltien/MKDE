@@ -65,6 +65,7 @@ int main() {
     for (double i = 0; i < zmax + 2000; i = i + 250) {
         grid_z.push_back(i);
     }
+
     for (int i = 0; i < animals->begin()->second->x.size(); i++) {
         move_var.push_back(2.0);
         obs_var.push_back(0.1);
@@ -88,10 +89,11 @@ int main() {
         */
 
         rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
-                      grid_x, grid_y, grid_z, *low, *high, it->second->MoveVarXY,
+                      grid_x, grid_y, grid_z, low, high, it->second->MoveVarXY,
                       it->second->MoveVarZ, it->second->ObsVarXY, it->second->ObsVarZ, t_step3d,
                       pdf_thresh3d);
-        writeMKDE3DtoVTK(it->second->x, it->second->y, it->second->z, rst3d, "raster3d_test.vtk", "test data");
+
+        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, "rastertest.vtk", "test data");
 //    }
 
     //rst->printESRIascii("raster_test.asc");
@@ -253,12 +255,12 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
 }
 
 
-gridFloat3D * mkde3dGridv02(vector<double> &T, vector<double> &X,
-                             vector<double> &Y, vector<double> &Z, vector<bool> &use,
-                             vector<double> &xgrid, vector<double> &ygrid, vector<double> &zgrid,
-                             gridFloat zMin, gridFloat zMax, vector<double> &msig2xy,
-                             vector<double> &msig2z, vector<double> &osig2xy, vector<double> &osig2z,
-                             vector<double> &t_step, vector<double> &pdf_thresh) {
+gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
+                             const vector<double> &Y, const vector<double> &Z, const vector<bool> &use,
+                             const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
+                             const gridFloat * zMin, const gridFloat * zMax, const vector<double> &msig2xy,
+                             const vector<double> &msig2z, const vector<double> &osig2xy, const vector<double> &osig2z,
+                             const vector<double> &t_step, const vector<double> &pdf_thresh) {
 
     int nObs = T.size();
 
@@ -282,14 +284,7 @@ gridFloat3D * mkde3dGridv02(vector<double> &T, vector<double> &X,
     double *zdens = (double *) malloc(nZ * sizeof(double)); // To precompute z
 
     // Create a vector of GridFloats and initializing GridFloat3D
-    gridFloat3D * rst3d = new gridFloat3D(xmin, ymin, zmin, xmax, ymax, zmax, xSz, ySz, zSz);
-
-    int array_num = 0;
-    for (double i = 0; i < zmax/zSz; i++) {
-        gridFloat *rst = new gridFloat(array_num++, nX, nY, xmin, ymin, xSz);
-        rst->setAllCellsToZero(true);
-        rst3d->xy_grids.push_back(rst);
-    }
+    gridFloat3D * rst3d = new gridFloat3D(xgrid, ygrid, zgrid);
 
     // set up time variables
     double t0, t1, t, tOld, dt, alpha;
@@ -418,9 +413,9 @@ gridFloat3D * mkde3dGridv02(vector<double> &T, vector<double> &X,
 
     // divide by totalT
     double maxDens = 0.0, sumDens = 0.0;
-    for (double eX = xmin; eX < xmax; eX = eX + xSz) {
+    for (double eZ = zmin; eZ < zmax; eZ = eZ + zSz) {
         for (double eY = ymin; eY < ymax; eY = eY + ySz) {
-            for (long eZ = zmin ;eZ < zmax; eZ = eZ + zSz) {
+            for (long eX = xmin ;eX < xmax; eX = eX + xSz) {
                 if (rst3d->getGridValue(eX, eY, eZ) != FLT_NO_DATA_VALUE) {
                     rst3d->setGridValue(eX, eY, eZ, rst3d->getGridValue(eX, eY, eZ) / W);
                     if (rst3d->getGridValue(eX, eY, eZ) > maxDens) {
@@ -432,12 +427,19 @@ gridFloat3D * mkde3dGridv02(vector<double> &T, vector<double> &X,
         }
     }
 
+/*
+        for (int eZ = zmin; eZ < zmax; eZ = eZ + zSz) {
+            for (int eY = ymin; eY <ymax; eY = eY + ySz) {
+                for (int eX = xmin; eX < xmax; eX = eX + xSz) {
+                    cout << "i: " << eX << "j: " << eY << "k: " << eZ << rst3d->getGridValue(eX, eY , eZ) << endl;
+                }
+            }
+        } */
     cout << "\tMaximum voxel density = " << maxDens << std::endl;
     cout << "\tSum of voxel densities = " << sumDens << std::endl;
     cout << "3D MKDE Computation: DONE" << std::endl;
 
     // RETURN DENSITY HERE
-    //SEG FAULT WHEN
     return rst3d;
 }
 
