@@ -134,20 +134,20 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
  * Writes MKDE3D to a VTK file format with the name of the file being fname
  *****************************************************************************/
 void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
-                      gridFloat3D * rst3d, char * fname, char * descr) {
+                      gridFloat3D * rst3d, string fname, string descr) {
     int nX = xgrid.size();
     int nY = ygrid.size();
     int nZ = zgrid.size();
 
     long nPoints = (long)nX*nY*nZ, ijk = 0;
-    char * fnm = new char[strlen(fname)+1];
+/*    char * fnm = new char[strlen(fname)+1];
     fnm[strlen(fname)] = 0;
-    memcpy(fnm, fname, strlen(fname));
+    memcpy(fnm, fname, strlen(fname)); */
 
     double densTmp;
 
     std::ofstream vtkfile;
-    vtkfile.open (fnm);
+    vtkfile.open (fname);
     // write header
     vtkfile << "# vtk DataFile Version 3.0" << std::endl;
     vtkfile << descr << std::endl;
@@ -170,7 +170,7 @@ void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, 
     vtkfile << "LOOKUP_TABLE densityTable" << std::endl;
     for (double eZ = rst3d->zmin; eZ < rst3d->zmax; eZ = eZ + rst3d->zsize) {
         for (double eY = rst3d->ymin; eY < rst3d->ymax; eY = eY + rst3d->ysize) {
-            for (long eX = rst3d->xmin ;eX < rst3d->xmax; eX = eX + rst3d->xsize) {
+            for (long eX = rst3d->xmin; eX < rst3d->xmax; eX = eX + rst3d->xsize) {
                 if (rst3d->getGridValue(eX, eY, eZ) == FLT_NO_DATA_VALUE) {
                     vtkfile << "0.0000000000000" << std::endl;
                 } else {
@@ -200,50 +200,47 @@ void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, 
 /*
 // write to GRASS GIS 3D ASCII raster file
 void writeMKDE3DtoGRASS(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
-                        const vector<double> &density, char * fname, char * nv) {
+                        gridFloat3D * rst3d, string fname, string nv) {
     int nX = xgrid.size();
     int nY = ygrid.size();
     int nZ = zgrid.size();
     long ijk = 0;
-    double xSz = xGrid[1] - xGrid[0];
-    double ySz = yGrid[1] - yGrid[0];
-    double zSz = zGrid[1] - zGrid[0];
+    double xSz = xgrid[1] - xgrid[0];
+    double ySz = ygrid[1] - ygrid[0];
+    double zSz = zgrid[1] - zgrid[0];
     double densTmp;
-    std::string fname = Rcpp::as<std::string>(filename);
-    char * fnm = new char[fname.size()+1];
-    fnm[fname.size()] = 0;
-    memcpy(fnm, fname.c_str(), fname.size());
+    char * fnm = new char[strlen(fname)+1];
+    fnm[strlen(fname)] = 0;
+    memcpy(fnm, fname, strlen(fname));
 
-// open file
+    // open file
     std::ofstream r3file;
     r3file.open (fnm);
     r3file << std::setprecision(12);
 
-// may need to set precision first
-// header
-    r3file << "north: " << yGrid[nY - 1] + 0.5 * ySz << std::endl; // north: y.max
-    r3file << "south: " << yGrid[0] - 0.5 * ySz << std::endl; // south: y.min
-    r3file << "east: " << xGrid[nX - 1] + 0.5 * xSz << std::endl; // east: x.max
-    r3file << "west: " << xGrid[0] - 0.5 * xSz << std::endl; // west: x.min
-    r3file << "top: " << zGrid[nZ - 1] + 0.5 * zSz << std::endl; // top: z.max
-    r3file << "bottom: " << zGrid[0] - 0.5 * zSz << std::endl;// bottom: z.min
+    // may need to set precision first
+    // header
+    r3file << "north: " << ygrid[nY - 1] + 0.5 * ySz << std::endl; // north: y.max
+    r3file << "south: " << ygrid[0] - 0.5 * ySz << std::endl; // south: y.min
+    r3file << "east: " << xgrid[nX - 1] + 0.5 * xSz << std::endl; // east: x.max
+    r3file << "west: " << xgrid[0] - 0.5 * xSz << std::endl; // west: x.min
+    r3file << "top: " << zgrid[nZ - 1] + 0.5 * zSz << std::endl; // top: z.max
+    r3file << "bottom: " << zgrid[0] - 0.5 * zSz << std::endl;// bottom: z.min
     r3file << "rows: " << nY << std::endl; // rows
     r3file << "cols: " << nX << std::endl; // cols
     r3file << "levels: " << nZ << std::endl; // levels: integer
 
-// data
-// possibly use std::scientific or #include <iomanip> with std::setprecision(12)
-    for (int k = 0; k < nZ; k++) {
-        for (int j = 0; j < nY; j++) {
-            for (int i = 0; i < nX; i++) {
-                ijk = getLinearIndex(i, j, k, nX, nY);
-                densTmp = d[ijk];
-                if (std::isnan(densTmp)) {
+    // data
+    // possibly use std::scientific or #include <iomanip> with std::setprecision(12)
+    for (int eZ = rst3d->zmin; eZ <= rst3d->zmax; eZ = eZ + rst3d->zsize) {
+        for (int eY = rst3d->ymin; eY <= rst3d->ymax; eY = eY + rst3d->ysize) {
+            for (int eX = rst3d->xmin; eX <= rst3d->xmax; eX = eX + rst3d->xsize) {
+                if (rst3d->getGridValue(eX, eY, eZ) == FLT_NO_DATA_VALUE) {
                     r3file << nv;
                 } else {
-                    r3file << densTmp;
+                    r3file << rst3d->getGridValue(eX, eY, eZ);
                 }
-                if (i == (nX - 1)) {
+                if (eX == rst3d->xmax) {
                     r3file << std::endl;
                 } else {
                     r3file << " ";
@@ -254,7 +251,7 @@ void writeMKDE3DtoGRASS(const vector<double> &xgrid, const vector<double> &ygrid
 
 // done...
     r3file.close();
-    return Rcpp::wrap(1);
+    return;
 }
 
 

@@ -62,7 +62,7 @@ int main() {
         grid_y.push_back(i);
     }
 
-    for (double i = 0; i < zmax + 2000; i = i + 250) {
+    for (double i = 0; i < zmax + 2000; i = i + 500) {
         grid_z.push_back(i);
     }
 
@@ -80,8 +80,7 @@ int main() {
 
     low->setAllCellsToZero(true);
 
-  //  for (auto it = animals->begin(); it != animals->end(); ++it) {
-        auto it = animals->begin();
+    for (auto it = animals->begin(); it != animals->end(); ++it) {
         updateTime(it->second);
         withinBounds(it->second, 4320);
         /*rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
@@ -93,8 +92,9 @@ int main() {
                       it->second->MoveVarZ, it->second->ObsVarXY, it->second->ObsVarZ, t_step3d,
                       pdf_thresh3d);
 
-        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, "rastertest.vtk", "test data");
-//    }
+        string filename = it->first + ".vtk";
+        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "test data");
+    }
 
     //rst->printESRIascii("raster_test.asc");
     return 0;

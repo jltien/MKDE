@@ -59,5 +59,7 @@ inline bool doubleEquals(double a, double b) {
 // IO Functions
 unordered_map<string, AnimalData *> *fileRead(const char *in_filename);
 void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
-                      gridFloat3D * rst3d, char * filename, char * description);
+                      gridFloat3D * rst3d, string fname, string description);
+void writeMKDE3DtoGRASS(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
+                        gridFloat3D * rst3d, string fname, string nv);
 #endif //MKDE_H
