@@ -933,7 +933,7 @@ gridFloat3D::gridFloat3D(const vector<double> &xgrid, const vector<double> &ygri
     znum = zgrid.size();
 
     int array_num = 0;
-    for (double i = 0; i < zmax / zsize; i++) {
+    for (double i = 0; i < znum; i++) {
         gridFloat *rst = new gridFloat(array_num++, xnum, ynum, xmin, ymin, xsize);
         rst->setAllCellsToZero(true);
         this->xy_grids.push_back(rst);

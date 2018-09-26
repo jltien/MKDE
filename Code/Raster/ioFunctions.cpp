@@ -155,8 +155,9 @@ void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, 
     vtkfile << "DATASET STRUCTURED_GRID" << std::endl;
     vtkfile << "DIMENSIONS " << nX << " " << nY << " " << nZ << std::endl;
     // write points
-    vtkfile << "POINTS " << nPoints << " float" << std::endl;
+    vtkfile << "POINTS " << nPoints << " double" << std::endl;
     vtkfile << std::scientific;
+
     for (int k = 0; k < nZ; k++) {
         for (int j = 0; j < nY; j++) {
             for (int i = 0; i < nX; i++) {
@@ -166,13 +167,14 @@ void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, 
     }
     // write data
     vtkfile << std::endl << "POINT_DATA " << nPoints << std::endl;
-    vtkfile << "SCALARS density float 1" << std::endl;
+    vtkfile << "SCALARS density double 1" << std::endl;
     vtkfile << "LOOKUP_TABLE densityTable" << std::endl;
-    for (double eZ = rst3d->zmin; eZ < rst3d->zmax; eZ = eZ + rst3d->zsize) {
-        for (double eY = rst3d->ymin; eY < rst3d->ymax; eY = eY + rst3d->ysize) {
-            for (long eX = rst3d->xmin; eX < rst3d->xmax; eX = eX + rst3d->xsize) {
-                if (rst3d->getGridValue(eX, eY, eZ) == FLT_NO_DATA_VALUE) {
-                    vtkfile << "0.0000000000000" << std::endl;
+
+    for (double eZ = rst3d->zmin; eZ <= rst3d->zmax; eZ = eZ + rst3d->zsize) {
+        for (double eY = rst3d->ymin; eY <= rst3d->ymax; eY = eY + rst3d->ysize) {
+            for (long eX = rst3d->xmin; eX <= rst3d->xmax; eX = eX + rst3d->xsize) {
+                if (rst3d->getGridValue(eX, eY, eZ) == FLT_NO_DATA_VALUE || rst3d->getGridValue(eX, eY, eZ) <= 0) {
+                    vtkfile << "0.000000e+00" << std::endl;
                 } else {
                         vtkfile << rst3d->getGridValue(eX, eY, eZ) << std::endl;
                 }
@@ -197,21 +199,16 @@ void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, 
 }
 
 
-/*
+
 // write to GRASS GIS 3D ASCII raster file
 void writeMKDE3DtoGRASS(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
-                        gridFloat3D * rst3d, string fname, string nv) {
+                        gridFloat3D * rst3d, string fnm, string nv) {
     int nX = xgrid.size();
     int nY = ygrid.size();
     int nZ = zgrid.size();
-    long ijk = 0;
     double xSz = xgrid[1] - xgrid[0];
     double ySz = ygrid[1] - ygrid[0];
     double zSz = zgrid[1] - zgrid[0];
-    double densTmp;
-    char * fnm = new char[strlen(fname)+1];
-    fnm[strlen(fname)] = 0;
-    memcpy(fnm, fname, strlen(fname));
 
     // open file
     std::ofstream r3file;
@@ -256,32 +253,22 @@ void writeMKDE3DtoGRASS(const vector<double> &xgrid, const vector<double> &ygrid
 
 
 
-/*
+
 // write to XDMF file
-SEXP writeMKDE3DtoXDMF(vector<double> xgrid, vector<double> ygrid, vector<double> zgrid, gridFloat3D * density, char * filenameXDMF, char * filenameDAT) {
-    Rcpp::NumericVector xGrid(xgrid); // cell centers in the x-dimension
-    Rcpp::NumericVector yGrid(ygrid); // cell centers in the y-dimension
-    Rcpp::NumericVector zGrid(zgrid); // cell centers in the z-dimension
-    int nX = (long)xGrid.length();
-    int nY = (long)yGrid.length();
-    int nZ = (long)zGrid.length();
-    long ijk = 0;
-    double xSz = xGrid[1] - xGrid[0];
-    double ySz = yGrid[1] - yGrid[0];
-    double zSz = zGrid[1] - zGrid[0];
+void writeMKDE3DtoXDMF(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
+                        gridFloat3D * rst3d, string fnmXDMF, string fnmDAT) {
+
+    int nX = xgrid.size();
+    int nY = ygrid.size();
+    int nZ = zgrid.size();
+    double xSz = xgrid[1] - xgrid[0];
+    double ySz = ygrid[1] - ygrid[0];
+    double zSz = zgrid[1] - zgrid[0];
     double densTmp;
-    std::vector<double> d = Rcpp::as<std::vector<double>>(density);
-    std::string strXDMF = Rcpp::as<std::string>(filenameXDMF);
-    std::string strDAT = Rcpp::as<std::string>(filenameDAT);
-    char * fnmXDMF = new char[strXDMF.size()+1];
-    fnmXDMF[strXDMF.size()] = 0;
-    memcpy(fnmXDMF, strXDMF.c_str(), strXDMF.size());
-    char * fnmDAT =new char[strDAT.size()+1];
-    fnmDAT[strDAT.size()] = 0;
-    memcpy(fnmDAT, strDAT.c_str(), strDAT.size());
+
     int nmSize = 0;
 // scan backward through char array, count chars, break when hit "/"; should count \0
-    for (int i = strDAT.size(); i >= 0; i--) {
+    for (int i = fnmDAT.size(); i >= 0; i--) {
         if (fnmDAT[i] == '/') {
             break;
         } else {
@@ -291,7 +278,7 @@ SEXP writeMKDE3DtoXDMF(vector<double> xgrid, vector<double> ygrid, vector<double
     char * binName = new char[nmSize];
     int j = 0;
     for (int i = 0; i < nmSize; i++) {
-        j = strDAT.size() + 1 - nmSize + i; // CHECK THIS!!!!
+        j = fnmDAT.size() + 1 - nmSize + i; // CHECK THIS!!!!
         binName[i] = fnmDAT[j];
     }
 // now copy name to string
@@ -312,7 +299,7 @@ SEXP writeMKDE3DtoXDMF(vector<double> xgrid, vector<double> ygrid, vector<double
     xmffile << "        <Geometry name=\"geo\" Type=\"ORIGIN_DXDYDZ\">" << std::endl;
     xmffile << "            <!-- Origin -->" << std::endl;
     xmffile << "            <DataItem Format=\"XML\" Dimensions=\"3\">" << std::endl;
-    xmffile << "             " << " " << (xGrid[0] - 0.5*xSz) << " " << (yGrid[0] - 0.5*ySz) << " " << (zGrid[0] - 0.5*zSz) << std::endl;
+    xmffile << "             " << " " << (xgrid[0] - 0.5*xSz) << " " << (ygrid[0] - 0.5*ySz) << " " << (zgrid[0] - 0.5*zSz) << std::endl;
     xmffile << "            </DataItem>" << std::endl;
     xmffile << "            <!-- DxDyDz -->" << std::endl;
     xmffile << "            <DataItem Format=\"XML\" Dimensions=\"3\">" << std::endl;
@@ -344,12 +331,11 @@ SEXP writeMKDE3DtoXDMF(vector<double> xgrid, vector<double> ygrid, vector<double
     if (!datfile.is_open()) {
         cout << "Error in writeMKDE3DtoXDMF(): Output file "<< fnmDAT << " could not be opened." << std::endl;
     } else {
-        for (int k = 0; k < nZ; k++) {
-            for (int j = 0; j < nY; j++) {
-                for (int i = 0; i < nX; i++) {
-                    ijk = getLinearIndex(i, j, k, nX, nY); // i, k, k, ...
-                    densTmp = d[ijk];
-                    if (std::isnan(densTmp)) {
+        for (int eZ = rst3d->zmin; eZ <= rst3d->zmax; eZ = eZ + rst3d->zsize) {
+            for (int eY = rst3d->ymin; eY <= rst3d->ymax; eY = eY + rst3d->ysize) {
+                for (int eX = rst3d->xmin; eX <= rst3d->xmax; eX = eX + rst3d->xsize) {
+                    densTmp = rst3d->getGridValue(eX, eY, eZ);
+                    if (densTmp == FLT_NO_DATA_VALUE || densTmp <= 0) {
                         densTmp = 0.0;
                     }
                     datfile.write((char *)(&densTmp), sizeof(densTmp));
@@ -360,109 +346,5 @@ SEXP writeMKDE3DtoXDMF(vector<double> xgrid, vector<double> ygrid, vector<double
     }
 
 // done...
-    return Rcpp::wrap(1);
+    return;
 }
-
-
-
-
-SEXP writeRasterToXDMF(SEXP xgrid, SEXP ygrid, SEXP rast, SEXP filenameXDMF, SEXP filenameDAT) {
-    Rcpp::NumericVector xGrid(xgrid); // cell centers in the x-dimension
-    Rcpp::NumericVector yGrid(ygrid); // cell centers in the y-dimension
-    int nX = (long)xGrid.length();
-    int nY = (long)yGrid.length();
-    long ijk = 0;
-    double xSz = xGrid[1] - xGrid[0];
-    double ySz = yGrid[1] - yGrid[0];
-    double densTmp;
-    std::vector<double> r = Rcpp::as<std::vector<double>>(rast);
-    std::string strXDMF = Rcpp::as<std::string>(filenameXDMF);
-    std::string strDAT = Rcpp::as<std::string>(filenameDAT);
-    char * fnmXDMF = new char[strXDMF.size()+1];
-    fnmXDMF[strXDMF.size()] = 0;
-    memcpy(fnmXDMF, strXDMF.c_str(), strXDMF.size());
-    char * fnmDAT =new char[strDAT.size()+1];
-    fnmDAT[strDAT.size()] = 0;
-    memcpy(fnmDAT, strDAT.c_str(), strDAT.size());
-    int nmSize = 0;
-// scan backward through char array, count chars, break when hit "/"; should count \0
-    for (int i = strDAT.size(); i >= 0; i--) {
-        if (fnmDAT[i] == '/') {
-            break;
-        } else {
-            nmSize++;
-        }
-    }
-    char * binName = new char[nmSize];
-    int j = 0;
-    for (int i = 0; i < nmSize; i++) {
-        j = strDAT.size() + 1 - nmSize + i; // CHECK THIS!!!!
-        binName[i] = fnmDAT[j];
-    }
-// now copy name to string
-
-// write XML wrapper
-    std::ofstream xmffile;
-    xmffile.open (fnmXDMF);
-    xmffile << std::setprecision(12);
-
-    xmffile << "<?xml version=\"1.0\" ?>" << std::endl;
-    xmffile << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>" << std::endl;
-    xmffile << "<Xdmf xmlns:xi=\"http://www.w3.org/2001/XInclude\" Version=\"2.0\">" << std::endl;
-    xmffile << "<Domain>" << std::endl;
-    xmffile << "    <Grid Name=\"Mesh\" GridType=\"Uniform\">" << std::endl;
-    xmffile << "        <Topology name=\"topo\" TopologyType=\"2DCoRectMesh\"" << std::endl;
-    xmffile << "            Dimensions=\"" << (nY + 1) << " " << (nX + 1) << "\">" << std::endl; // y, x or x, y ?
-    xmffile << "        </Topology>" << std::endl;
-    xmffile << "        <Geometry name=\"geo\" Type=\"ORIGIN_DXDY\">" << std::endl;
-    xmffile << "            <!-- Origin -->" << std::endl;
-    xmffile << "            <DataItem Format=\"XML\" Dimensions=\"2\">" << std::endl;
-    xmffile << "             " << (xGrid[0] - 0.5*xSz) << " " << (yGrid[0] - 0.5*ySz) << std::endl; // y, x or x, y ?
-    xmffile << "            </DataItem>" << std::endl;
-    xmffile << "            <!-- DxDy -->" << std::endl;
-    xmffile << "            <DataItem Format=\"XML\" Dimensions=\"2\">" << std::endl;
-    xmffile << "             " << xSz << " " << ySz <<  std::endl; // y, x or x, y ?
-    xmffile << "            </DataItem>" << std::endl;
-    xmffile << "        </Geometry>" << std::endl;
-    xmffile << "        <Attribute Name=\"Raster\" Center=\"Cell\">" << std::endl; // need AttributeType="Scalar" or Type="Scalar" ?
-    xmffile << "            <DataItem Format=\"Binary\"" << std::endl;
-    xmffile << "             DataType=\"Double\"" << std::endl;
-    xmffile << "             Precision=\"8\"" << std::endl;
-    if (isMachineBigEndian()) {
-        xmffile << "             Endian=\"Big\"" << std::endl;
-    } else {
-        xmffile << "             Endian=\"Little\"" << std::endl;
-    }
-    xmffile << "             Dimensions=\"" << nY << " " << nX << "\">" << std::endl; // y, x or x, y ?
-    xmffile << "               " << binName << std::endl;
-    xmffile << "            </DataItem>" << std::endl;
-    xmffile << "        </Attribute>" << std::endl;
-    xmffile << "    </Grid>" << std::endl;
-    xmffile << "</Domain>" << std::endl;
-    xmffile << "</Xdmf>" << std::endl;
-
-// close XML file
-    xmffile.close();
-
-// write binary data (kji order)
-    std::ofstream datfile(fnmDAT, std::ios::out | std::ios::trunc | std::ios::binary); // std::ios::out | std::ios::app | std::ios::binary
-    if (!datfile.is_open()) {
-        Rcpp::Rcout << "Error in writeMKDE3DtoXDMF(): Output file "<< fnmDAT << " could not be opened." << std::endl;
-    } else {
-// this is effectively the same as the above
-        for (int i = 0; i < r.size(); i++) {
-            if (i%100000 == 0) {
-                Rcpp::Rcout << "writing raster cell " << (i +1 ) << " of " << r.size() << " to file " << binName << std::endl;
-            }
-            densTmp = r[i];
-            if (std::isnan(densTmp)) {
-                densTmp = 0.0;
-            }
-            datfile.write((char *)(&densTmp), sizeof(densTmp));
-        }
-        datfile.close();
-    }
-
-// done...
-    return Rcpp::wrap(1);
-} */
