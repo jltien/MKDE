@@ -17,9 +17,12 @@
 #include <cmath>
 #include <math.h>
 #include <random>
-#include "Raster/raster.cpp"
-#include "AnimalData.h"
+#include "Raster/raster.h"
+#include "AnimalData.cpp"
+#include "Raster/pairwiseFunctions.h"
 #include "Raster/ioFunctions.cpp"
+
+using namespace std;
 
 const double MY_PI = 3.141592653589793;
 const double MY_EPS = 0.00000001;

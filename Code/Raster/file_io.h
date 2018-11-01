@@ -10,7 +10,9 @@
 
 #ifndef FILE_IO_H
 #define FILE_IO_H
-
+#if __cplusplus > 199711L
+#define register      // Deprecated in C++11.
+#endif  // #if __cplusplus > 199711L
 // header file includes
 
 #include "basicDefinitions.h"

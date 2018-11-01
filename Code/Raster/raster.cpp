@@ -17,9 +17,6 @@
 
 #include "raster.h"
 
-#ifdef _ANSI_STD_H
-using namespace std;
-#endif
 
 /*******************************************************************************
 * BOUNDING BOX                                                                 *
@@ -64,7 +61,7 @@ gridFloat::gridFloat(int rID, long nr, long nc, double xll, double yll, double c
         num_rows = nr;
     }
     else {
-        cerr << "Error in gridFloat() constructor: Number of rows must be positive." << endl;
+        std::cerr << "Error in gridFloat() constructor: Number of rows must be positive." << std::endl;
         exit(1);
     }
 
@@ -73,7 +70,7 @@ gridFloat::gridFloat(int rID, long nr, long nc, double xll, double yll, double c
         num_cols = nc;
     }
     else {
-        cerr << "Error in gridFloat() constructor: Number of columns must be positive." << endl;
+        std::cerr << "Error in gridFloat() constructor: Number of columns must be positive." << std::endl;
         exit(1);
     }
 
@@ -140,7 +137,7 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
     }
 
 
-    ifstream fin;
+    std::ifstream fin;
 
 
     // ESRI ASCII OR BINARY FLOATING-POINT RASTER =============================
@@ -149,7 +146,7 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
         // open file ----------------------------------------------------------
     	fin.open(filenm);
     	if (!fin.is_open()) {
-    		cerr << "Error in gridFloat() constructor: File "<< filenm << " could not be opened." << endl;
+    		std::cerr << "Error in gridFloat() constructor: File "<< filenm << " could not be opened." << std::endl;
     		exit(1);
     	}
     	
@@ -161,7 +158,7 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
             fin >> num_cols;
        	}
     	else {
-    		cerr << "Error in gridFloat() constructor [1]: Header file not formated correctly." << endl;
+    		std::cerr << "Error in gridFloat() constructor [1]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -172,8 +169,8 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
             fin >> num_rows;
        	}
     	else {
-            cerr << row_field << " != " << row_s1 << " or " << row_s2 << endl;
-    		cerr << "Error in gridFloat() constructor [2]: Header file not formated correctly." << endl;
+            std::cerr << row_field << " != " << row_s1 << " or " << row_s2 << std::endl;
+    		std::cerr << "Error in gridFloat() constructor [2]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -189,7 +186,7 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
                 fin >> yll_val;
     		}
     		else {
-    			cerr << "Error in gridFloat() constructor [3]: Header file not formated correctly." << endl;
+    			std::cerr << "Error in gridFloat() constructor [3]: Header file not formated correctly." << std::endl;
                 exit(1);
     		}
         }
@@ -203,12 +200,12 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
                 fin >> yll_val;
     		}
     		else {
-    			cerr << "Error in gridFloat() constructor [4]: Header file not formated correctly." << endl;
+    			std::cerr << "Error in gridFloat() constructor [4]: Header file not formated correctly." << std::endl;
                 exit(1);
     		}
         }
         else { // incorrect flag
-            cerr << "Error in gridFloat() constructor [5]: Header file not formated correctly." << endl;
+            std::cerr << "Error in gridFloat() constructor [5]: Header file not formated correctly." << std::endl;
             exit(1);
         }
     	eatline(fin);
@@ -219,7 +216,7 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
             fin >> cell_size;
     	}
     	else {
-    		cerr << "Error in gridFloat() constructor [6]: Header file not formated correctly." << endl;
+    		std::cerr << "Error in gridFloat() constructor [6]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -230,7 +227,7 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
     		fin >> no_dat;
     	}
     	else {
-    		cerr << "Error in gridFloat() constructor [7]: Header file not formated correctly." << endl;
+    		std::cerr << "Error in gridFloat() constructor [7]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -280,8 +277,8 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
                 binFileIsBigEndian = false;
             }
         	else {
-        		cerr << "Error in gridFloat() constructor [8]: ";
-        		cerr << "Header file not formated correctly." << endl;
+        		std::cerr << "Error in gridFloat() constructor [8]: ";
+        		std::cerr << "Header file not formated correctly." << std::endl;
         		exit(1);
         	}
 
@@ -311,9 +308,9 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
            }
 
             // 11. open binary data file
-            ifstream dfin(flt_file, ios_base::binary);
+            std::ifstream dfin(flt_file, std::ios_base::binary);
             if (!dfin.is_open()) {
-        		cerr << "Error in gridFloat() constructor [9]: Data file "<< flt_file << " could not be opened." << endl;
+        		std::cerr << "Error in gridFloat() constructor [9]: Data file "<< flt_file << " could not be opened." << std::endl;
         		exit(1);
         	}
             
@@ -333,7 +330,7 @@ gridFloat::gridFloat(int rID, char * filenm, char * filetype) {
     }
     // ERROR -- UNKNOWN FILE TYPE =============================================
     else {
-        cerr << "Error in gridFloat() constructor: Unknown file type." << endl;
+        std::cerr << "Error in gridFloat() constructor: Unknown file type." << std::endl;
         exit(1);
     }
 }
@@ -421,7 +418,7 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
         rasterID = NULL_RASTER_ID;
     }
 
-    ifstream fin;
+    std::ifstream fin;
 
     // ESRI ASCII OR BINARY FLOATING-POINT RASTER =============================
     if ((strcmp(filetype, ESRI_ASCII) == 0)||(strcmp(filetype, ESRI_BINARY) == 0)) {
@@ -429,7 +426,7 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
         // open file ----------------------------------------------------------
     	fin.open(filenm);
     	if (!fin.is_open()) {
-    		cerr << "Error in readDataFromFile(): File "<< filenm << " could not be opened." << endl;
+    		std::cerr << "Error in readDataFromFile(): File "<< filenm << " could not be opened." << std::endl;
     		exit(1);
     	}
     	
@@ -441,7 +438,7 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
             fin >> tmp_num_cols;
        	}
     	else {
-    		cerr << "Error in readDataFromFile() [1]: Header file not formated correctly." << endl;
+    		std::cerr << "Error in readDataFromFile() [1]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -452,8 +449,8 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
             fin >> tmp_num_rows;
        	}
     	else {
-            cerr << row_field << " != " << row_s1 << " or " << row_s2 << endl;
-    		cerr << "Error in readDataFromFile() [2]: Header file not formated correctly." << endl;
+            std::cerr << row_field << " != " << row_s1 << " or " << row_s2 << std::endl;
+    		std::cerr << "Error in readDataFromFile() [2]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -469,7 +466,7 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
                 fin >> yll_val;
     		}
     		else {
-    			cerr << "Error in readDataFromFile() [3]: Header file not formated correctly." << endl;
+    			std::cerr << "Error in readDataFromFile() [3]: Header file not formated correctly." << std::endl;
                 exit(1);
     		}
         }
@@ -483,12 +480,12 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
                 fin >> yll_val;
     		}
     		else {
-    			cerr << "Error in readDataFromFile() [4]: Header file not formated correctly." << endl;
+    			std::cerr << "Error in readDataFromFile() [4]: Header file not formated correctly." << std::endl;
                 exit(1);
     		}
         }
         else { // incorrect flag
-            cerr << "Error in readDataFromFile() [5]: Header file not formated correctly." << endl;
+            std::cerr << "Error in readDataFromFile() [5]: Header file not formated correctly." << std::endl;
             exit(1);
         }
     	eatline(fin);
@@ -499,7 +496,7 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
             fin >> tmp_cell_size;
     	}
     	else {
-    		cerr << "Error in readDataFromFile() [6]: Header file not formated correctly." << endl;
+    		std::cerr << "Error in readDataFromFile() [6]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -571,7 +568,7 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
     		fin >> no_dat;
     	}
     	else {
-    		cerr << "Error in readDataFromFile() [7]: Header file not formated correctly." << endl;
+    		std::cerr << "Error in readDataFromFile() [7]: Header file not formated correctly." << std::endl;
     		exit(1);
     	}
     	eatline(fin);
@@ -603,8 +600,8 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
                 binFileIsBigEndian = false;
             }
         	else {
-        		cerr << "Error in readDataFromFile() [8]: ";
-        		cerr << "Header file not formated correctly." << endl;
+        		std::cerr << "Error in readDataFromFile() [8]: ";
+        		std::cerr << "Header file not formated correctly." << std::endl;
         		exit(1);
         	}
 
@@ -634,9 +631,9 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
            }
 
             // 13. open binary data file
-            ifstream dfin(flt_file, ios_base::binary);
+            std::ifstream dfin(flt_file, std::ios_base::binary);
             if (!dfin.is_open()) {
-        		cerr << "Error in readDataFromFile()readDataFromFile [9]: Data file "<< flt_file << " could not be opened." << endl;
+        		std::cerr << "Error in readDataFromFile()readDataFromFile [9]: Data file "<< flt_file << " could not be opened." << std::endl;
         		exit(1);
         	}
             
@@ -656,7 +653,7 @@ void gridFloat::readDataFromFile(int rID, char * filenm, char * filetype) {
     }
     // ERROR -- UNKNOWN FILE TYPE =============================================
     else {
-        cerr << "Error in readDataFromFile(): Unknown file type." << endl;
+        std::cerr << "Error in readDataFromFile(): Unknown file type." << std::endl;
         exit(1);
     }
 }
@@ -760,78 +757,78 @@ void gridFloat::scaleFromZeroToOne() {
 
 // display header file info
 void gridFloat::summary() {
-    cout << "================================================================================" << endl;
-	cout << "Grid ID:" << endl;
-    cout << "--------------------------------------------------------------------------------" << endl;
-    cout << rasterID << endl;
-    cout << "================================================================================" << endl;
-	cout << "Grid Bounding Box:" << endl;
-    cout << "--------------------------------------------------------------------------------" << endl;
+    std::cout << "================================================================================" << std::endl;
+	std::cout << "Grid ID:" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------" << std::endl;
+    std::cout << rasterID << std::endl;
+    std::cout << "================================================================================" << std::endl;
+    std::cout << "Grid Bounding Box:" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------" << std::endl;
 	grid_bbox.print();
-    cout << endl;
-    cout << "================================================================================" << endl;
-	cout << "Grid Properties:" << endl;
-    cout << "--------------------------------------------------------------------------------" << endl;
-	cout.width(15);
-	cout << row_s2;
-	cout.width(15);
-	cout << num_rows << endl;
+    std::cout << std::endl;
+    std::cout << "================================================================================" << std::endl;
+    std::cout << "Grid Properties:" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------" << std::endl;
+    std::cout.width(15);
+    std::cout << row_s2;
+    std::cout.width(15);
+    std::cout << num_rows << std::endl;
 
-	cout.width(15);
-	cout << col_s2;
-	cout.width(15);
-	cout << num_cols << endl;
+    std::cout.width(15);
+    std::cout << col_s2;
+    std::cout.width(15);
+    std::cout << num_cols << std::endl;
 
-	cout.width(15);
-	cout << cel_s2;
-	cout.width(15);
-	cout << cell_size << endl;
+    std::cout.width(15);
+    std::cout << cel_s2;
+    std::cout.width(15);
+    std::cout << cell_size << std::endl;
 
-	cout.width(15);
-	cout << nan_s3;
-	cout.width(15);
-	cout << no_dat << endl;
-    cout << endl;
+    std::cout.width(15);
+    std::cout << nan_s3;
+    std::cout.width(15);
+    std::cout << no_dat << std::endl;
+    std::cout << std::endl;
 }
 
 void gridFloat::display() {
     summary();
     long i, j;
-    cout << "================================================================================" << endl;
-    cout << "Grid Data:" << endl;
-    cout << "--------------------------------------------------------------------------------" << endl;
+    std::cout << "================================================================================" << std::endl;
+    std::cout << "Grid Data:" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------" << std::endl;
     for (i = 0; i < num_rows; i++) {
         for (j = 0; j < num_cols; j++) {
-            cout << data[i][j];
+            std::cout << data[i][j];
             if (j < (num_cols - 1)) {
-                cout << "\t";
+                std::cout << "\t";
             }
         }
-        cout << endl;
+        std::cout << std::endl;
     }
-    cout << endl;
+    std::cout << std::endl;
 }
 
 void gridFloat::printESRIascii(char * filen) {
     // 1.  open file
-    ofstream fout;
+    std::ofstream fout;
     fout.open(filen);
     if (!fout.is_open()) {
-        cerr << "Error in printESRIascii(): Output file "<< filen << " could not be opened." << endl;
+        std::cerr << "Error in printESRIascii(): Output file "<< filen << " could not be opened." << std::endl;
         exit(1);
     }
     // 2.  number of colums
-    fout << setw(14) << left << col_s2  << num_cols << endl;
+    fout << std::setw(14) << std::left << col_s2  << num_cols << std::endl;
     // 3.  number of rows
-    fout << setw(14) << left << row_s2 << num_rows << endl;
+    fout << std::setw(14) << std::left << row_s2 << num_rows << std::endl;
     // 4.  xll corner
-    fout << setw(14) << left << xll_s1B << grid_bbox.get_xMin() << endl;
+    fout << std::setw(14) << std::left << xll_s1B << grid_bbox.get_xMin() << std::endl;
     // 5.  yll corner
-    fout << setw(14) << left << yll_s1B << grid_bbox.get_yMin() << endl;
+    fout << std::setw(14) << std::left << yll_s1B << grid_bbox.get_yMin() << std::endl;
     // 6.  cell size
-    fout << setw(14) << left << cel_s2 << cell_size << endl;
+    fout << std::setw(14) << std::left << cel_s2 << cell_size << std::endl;
     // 7.  no data value
-    fout << setw(14) << left << nan_s1 << no_dat << endl;
+    fout << std::setw(14) << std::left << nan_s1 << no_dat << std::endl;
     // 8.  grid data
     long i, j;
     for (i = 0; i < num_rows; i++) {
@@ -841,9 +838,9 @@ void gridFloat::printESRIascii(char * filen) {
                 fout << " ";
             }
         }
-        fout << endl;
+        fout << std::endl;
     }
-    fout << endl;
+    fout << std::endl;
     // 9.  close file
     fout.close();
 }
@@ -862,43 +859,43 @@ void gridFloat::printESRIbinary(char * filen) {
         flt_file[name_len - 1] = 't';
     }
     else {
-        cerr << "Error in printESRIbinary(): Output file "<< filen << " does not end in .hdr extension." << endl;
+        std::cerr << "Error in printESRIbinary(): Output file "<< filen << " does not end in .hdr extension." << std::endl;
         exit(1);
     }
     
     // now, open file
-    ofstream fout;
+    std::ofstream fout;
     fout.open(filen);
     if (!fout.is_open()) {
-        cerr << "Error in printESRIbinary(): Output file "<< filen << " could not be opened." << endl;
+        std::cerr << "Error in printESRIbinary(): Output file "<< filen << " could not be opened." << std::endl;
         exit(1);
     }
     // 2.  number of colums
-    fout << setw(14) << left << col_s2 << num_cols << endl;
+    fout << std::setw(14) << std::left << col_s2 << num_cols << std::endl;
     // 3.  number of rows
-    fout << setw(14) << left << row_s2 << num_rows << endl;
+    fout << std::setw(14) << std::left << row_s2 << num_rows << std::endl;
     // 4.  xll corner
-    fout << setw(14) << left << xll_s1B << grid_bbox.get_xMin() << endl;
+    fout << std::setw(14) << std::left << xll_s1B << grid_bbox.get_xMin() << std::endl;
     // 5.  yll corner
-    fout << setw(14) << left << yll_s1B << grid_bbox.get_yMin() << endl;
+    fout << std::setw(14) << std::left << yll_s1B << grid_bbox.get_yMin() << std::endl;
     // 6.  cell size
-    fout << setw(14) << left << cel_s2 << cell_size << endl;
+    fout << std::setw(14) << std::left << cel_s2 << cell_size << std::endl;
     // 7.  no data value
-    fout << setw(14) << left << nan_s1 << no_dat << endl;
+    fout << std::setw(14) << std::left << nan_s1 << no_dat << std::endl;
     // 8.  byte order
     if (isMachineBigEndian()) {
-        fout << setw(14) << left << byt_s2 << byt_s1A << endl;
+        fout << std::setw(14) << std::left << byt_s2 << byt_s1A << std::endl;
     }
     else {
-        fout << setw(14) << left << byt_s2 << byt_s2A << endl;
+        fout << std::setw(14) << std::left << byt_s2 << byt_s2A << std::endl;
     }
     // 9. close file
     fout.close();
     // FLT FILE
     // 1.  open file
-    ofstream datout(flt_file, ios::out | ios::app | ios::binary);
+    std::ofstream datout(flt_file, std::ios::out | std::ios::app | std::ios::binary);
     if (!datout.is_open()) {
-        cerr << "Error in printESRIbinary(): Output file "<< filen << " could not be opened." << endl;
+        std::cerr << "Error in printESRIbinary(): Output file "<< filen << " could not be opened." << std::endl;
         exit(1);
     }
     // 2.  write grid data
@@ -918,7 +915,7 @@ void gridFloat::printESRIbinary(char * filen) {
 /*------------------------------------------------------------------------------
 * Constructor to make a 3d raster of no data values                            *
 ------------------------------------------------------------------------------*/
-gridFloat3D::gridFloat3D(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid) {
+gridFloat3D::gridFloat3D(const std::vector<double> &xgrid, const std::vector<double> &ygrid, const std::vector<double> &zgrid) {
     xmin = xgrid[0];
     xmax = xgrid[xgrid.size() - 1];
     ymin = ygrid[0];

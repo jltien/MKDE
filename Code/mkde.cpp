@@ -1,6 +1,5 @@
 #include "mkde.h"
 
-using namespace std;
 /*
 int xmin = 583022;
 int xmax = 722953;
@@ -8,6 +7,18 @@ int ymin = 3364040;
 int ymax = 3514539;
 */
 int main() {
+
+    vector<double> tgrid;
+    for (double i = 50.0; i <= 200.0; i++) {
+        tgrid.push_back(i);
+    }
+    vector<double> tloc_a = {75.2, 80.1, 85.2, 90.2, 95.1, 100.3, 105.2, 115.1, 120.2, 125.1, 130.3, 140.3, 145.1,
+            150.3, 155.1, 160.2, 180.1, 185.2, 190.2, 195.1, 200.2, 205.1};
+    vector<double> iloc_a = assignLocationIndexToTimeGrid(tgrid, tloc_a, 10000);
+    for (int i = 0; i < iloc_a.size(); i++) {
+        cout << iloc_a[i] << endl;
+    }
+     /*
     unordered_map<string, AnimalData *> *animals;
     animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
 
@@ -83,20 +94,30 @@ int main() {
     for (auto it = animals->begin(); it != animals->end(); ++it) {
         updateTime(it->second);
         withinBounds(it->second, 4320);
-        /*rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
                grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh);
-        */
+
 
         rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
                       grid_x, grid_y, grid_z, low, high, it->second->MoveVarXY,
                       it->second->MoveVarZ, it->second->ObsVarXY, it->second->ObsVarZ, t_step3d,
                       pdf_thresh3d);
 
+
         string filename = it->first + ".vtk";
         writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "test data");
+
+
+        string filename = it->first + ".grass";
+        writeMKDE3DtoGRASS(grid_x, grid_y, grid_z, rst3d, filename, "0");
+
+        string filename = it->first + ".xdmf";
+        writeMKDE3DtoXDMF(grid_x, grid_y, grid_z, rst3d, "test", filename);
+
     }
 
     //rst->printESRIascii("raster_test.asc");
+*/
     return 0;
 }
 
@@ -413,9 +434,9 @@ gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
 
     // divide by totalT
     double maxDens = 0.0, sumDens = 0.0;
-    for (double eZ = zmin; eZ < zmax; eZ = eZ + zSz) {
-        for (double eY = ymin; eY < ymax; eY = eY + ySz) {
-            for (long eX = xmin ;eX < xmax; eX = eX + xSz) {
+    for (double eZ = zmin; eZ <= zmax; eZ = eZ + zSz) {
+        for (double eY = ymin; eY <= ymax; eY = eY + ySz) {
+            for (long eX = xmin ;eX <= xmax; eX = eX + xSz) {
                 if (rst3d->getGridValue(eX, eY, eZ) != FLT_NO_DATA_VALUE) {
                     rst3d->setGridValue(eX, eY, eZ, rst3d->getGridValue(eX, eY, eZ) / W);
                     if (rst3d->getGridValue(eX, eY, eZ) > maxDens) {
@@ -506,19 +527,6 @@ double integrateNormal(double x0, double x1, double mu, double sigma) {
     double p0 = pnorm(x0, mu, sigma);
     double p1 = pnorm(x1, mu, sigma);
     return p1 - p0;
-}
-
-bool isMachineBigEndian(void) {
-    union {
-        long num;
-        unsigned char uc[sizeof(long)];
-    } u;
-    u.num = 1;
-    if (u.uc[0] == 1) {
-        return false;
-    } else {
-        return true;
-    }
 }
 
 /*****************************************************************************

@@ -1,24 +1,22 @@
-# Makefile for RasterDemo
-# By Jeff Tracey, 23 Mar 2018
+CC = g++ -std=c++11
 
-CC = g++ # icc -ansi # g++
-DEBUG_FLAG = #but assign -g for debugging with gdb
-LCHECK_FLAG = #assign -lefence to use Electric Fence memory debugger
-OPT = -O2 # assign -Wall for warnings; assign - O0 for no optim; -O2 for optim
-PROF = #assign -pg for profiling with gprof
+mkde: mkde.o pairwiseFunctions.o raster.o file_io.o basicFunctions.o
+	${CC} mkde.o pairwiseFunctions.o raster.o file_io.o basicFunctions.o -o mkde
 
-mkde : mkde.o raster.o basicFunctions.o file_io.o
-	${CC} ${OPT} ${DEBUG_FLAG} ${LCHECK_FLAG} -o mkde.o RasterDemo.o raster.o basicFunctions.o file_io.o ${PROF}
-mkde.o : mkde.cpp AnimalData.h ./Raster/raster.h ./Raster/basicFunctions.h ./Raster/file_io.h
-	${CC} -c ${OPT} ${DEBUG_FLAG} mkde.cpp ${PROF}
-raster.o : ./Raster/raster.cpp ./Raster/raster.h  ./Raster/file_io.h ./Raster/basicDefinitions.h ./Raster/basicFunctions.h
-	${CC} -c ${OPT} ${DEBUG_FLAG} ./Raster/raster.cpp ${PROF}
-file_io.o : file_io.cpp file_io.h ./Raster/basicDefinitions.h
-	${CC} -c ${OPT} ${DEBUG_FLAG} ./Raster/file_io.cpp ${PROF}
-basicFunctions.o : basicFunctions.cpp ./Raster/basicFunctions.h ./Raster/basicDefinitions.h
-	${CC} -c ${OPT} ${DEBUG_FLAG} ./Raster/basicFunctions.cpp ${PROF}
+mkde.o: mkde.cpp mkde.h
+	${CC} -c mkde.cpp
 
-.PHONY : clean
-clean : 
-	-rm core.* *.o
+pairwiseFunctions.o: ./Raster/pairwiseFunctions.cpp ./Raster/pairwiseFunctions.h
+	${CC} -c ./Raster/pairwiseFunctions.cpp
 
+raster.o: ./Raster/raster.cpp ./Raster/raster.o
+	${CC} -c ./Raster/raster.cpp
+
+file_io.o: ./Raster/file_io.cpp ./Raster/file_io.h
+	${CC} -c ./Raster/file_io.cpp
+
+basicFunctions.o: ./Raster/basicFunctions.cpp ./Raster/basicFunctions.h
+	${CC} -c ./Raster/basicFunctions.cpp
+
+clean:
+	rm *.o mkde

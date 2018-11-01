@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <vector>
 
 const int NULL_RASTER_ID = -1;
 

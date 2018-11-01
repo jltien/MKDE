@@ -1,3 +1,4 @@
+using namespace std;
 /*****************************************************************************
  * Takes an animal data file with an id(string), x(double), y(double), and
  * z(double) and parses the data into a vector of vector of the data. The outer
@@ -281,6 +282,7 @@ void writeMKDE3DtoXDMF(const vector<double> &xgrid, const vector<double> &ygrid,
         j = fnmDAT.size() + 1 - nmSize + i; // CHECK THIS!!!!
         binName[i] = fnmDAT[j];
     }
+
 // now copy name to string
 
 // write XML wrapper

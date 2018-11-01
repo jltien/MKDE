@@ -31,10 +31,10 @@ const int dayPerMonthLeapYr[] = {31,29,31,30,31,30,31,31,30,31,30,31};
 * functions that handle floating point problems                               *
 -----------------------------------------------------------------------------*/
 inline double protectedLog(double x) {
-    if (!isnan(x)) {
+    if (!std::isnan(x)) {
         if (x >= 0.0) {
             double y = log(x);
-            int finCheck = isinf(y);
+            int finCheck = std::isinf(y);
             if (finCheck == 1) return DBL_MAX; // return the largest possible double
             else if (finCheck == -1) return DBL_MIN; // return the smallest possible double
             else return y;
@@ -51,9 +51,9 @@ inline double protectedLog(double x) {
 }
 
 inline double protectedExp(double x) {
-    if (!isnan(x)) {
+    if (!std::isnan(x)) {
         double y = exp(x);
-        int finCheck = isinf(y);
+        int finCheck = std::isinf(y);
         if (finCheck == 1) return DBL_MAX; // return the largest possible double
         else if (finCheck == -1) return DBL_MIN; // return the smallest possible double
         else return y;
@@ -65,7 +65,7 @@ inline double protectedExp(double x) {
 }
 
 inline double protectedDivision(double n, double d) {
-    if ((!isnan(n))&&(!isnan(d))) {
+    if ((!std::isnan(n))&&(!std::isnan(d))) {
         if (d == 0.0) {
             if (n == 0.0) {
                 std::cerr << "Error in protectedDivision(): n and d are 0." << std::endl;
