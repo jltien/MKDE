@@ -55,7 +55,8 @@ std::vector<Tuple> interpolateCoordinateOnTimeGrid(std::vector<double> & grid_ti
     return res_xyz;
 }
 
-std::vector<double> euclideanDistance(std::vector<Tuple> & xyz0, std::vector<Tuple> & xyz1, bool use_z = false) {
+std::vector<double> euclideanDistance(std::vector<Tuple> & xyz0, std::vector<Tuple> & xyz1, bool use_z) {
+    use_z = false;
     int n0 = xyz0.size();
     int n1 = xyz1.size();
     if (n0 == n1) {

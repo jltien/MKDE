@@ -32,6 +32,6 @@ std::vector<double> assignLocationIndexToTimeGrid(std::vector<double> & grid_tim
 
 std::vector<Tuple> interpolateCoordinateOnTimeGrid(std::vector<double> & grid_times, std::vector<double> & location_indexes,
                                                    std::vector<double> & location_times, std::vector<Tuple> & location_xyz);
-std::vector<double> euclideanDistance(std::vector<Tuple> & xyz0, std::vector<Tuple> & xyz1, bool use_z = false);
+std::vector<double> euclideanDistance(std::vector<Tuple> & xyz0, std::vector<Tuple> & xyz1, bool use_z);
 
 #endif //MKDE_PAIRWISEFUNCTIONS_H

@@ -21,22 +21,7 @@
 * Check characteristics of machine                                            *
 ******************************************************************************/
 
-/*-----------------------------------------------------------------------------
-* Test byte order of machine                                                  *
------------------------------------------------------------------------------*/
-bool isMachineBigEndian(void) {
-	union {
-		long num;
-		unsigned char uc[sizeof(long)];
-	} u;
-	u.num = 1;
-	if (u.uc[0] == 1) {
-		return false;
-	}
-	else {
-		return true;
-	}
-}
+
 
 /*-----------------------------------------------------------------------------
 * Check to see if long, double, and float data types are of the expected size *

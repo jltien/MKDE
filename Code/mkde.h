@@ -18,6 +18,7 @@
 #include <math.h>
 #include <random>
 #include "Raster/raster.h"
+#include "Raster/file_io.h"
 #include "AnimalData.cpp"
 #include "Raster/pairwiseFunctions.h"
 #include "Raster/ioFunctions.cpp"

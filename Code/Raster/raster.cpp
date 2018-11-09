@@ -980,4 +980,3 @@ long gridFloat3D::getGridZ(double zcoord) {
         exit(1);
     }
 }
-

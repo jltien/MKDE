@@ -1,13 +1,6 @@
 #include "mkde.h"
-
-/*
-int xmin = 583022;
-int xmax = 722953;
-int ymin = 3364040;
-int ymax = 3514539;
-*/
 int main() {
-
+/*
     vector<double> tgrid;
     for (double i = 50.0; i <= 200.0; i++) {
         tgrid.push_back(i);
@@ -17,8 +10,8 @@ int main() {
     vector<double> iloc_a = assignLocationIndexToTimeGrid(tgrid, tloc_a, 10000);
     for (int i = 0; i < iloc_a.size(); i++) {
         cout << iloc_a[i] << endl;
-    }
-     /*
+    } */
+
     unordered_map<string, AnimalData *> *animals;
     animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
 
@@ -107,17 +100,17 @@ int main() {
         string filename = it->first + ".vtk";
         writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "test data");
 
-
+/*
         string filename = it->first + ".grass";
         writeMKDE3DtoGRASS(grid_x, grid_y, grid_z, rst3d, filename, "0");
 
         string filename = it->first + ".xdmf";
         writeMKDE3DtoXDMF(grid_x, grid_y, grid_z, rst3d, "test", filename);
-
+*/
     }
 
     //rst->printESRIascii("raster_test.asc");
-*/
+
     return 0;
 }
 
@@ -549,5 +542,22 @@ void withinBounds(AnimalData * animal, long minutes) {
 void updateTime(AnimalData * animal) {
     for (int i = 0; i < animal->epoch_t.size(); i++) {
         animal->epoch_t[i] = animal->epoch_t[i] - animal->epoch_t[0];
+    }
+}
+
+/*-----------------------------------------------------------------------------
+* Test byte order of machine                                                  *
+-----------------------------------------------------------------------------*/
+bool isMachineBigEndian(void) {
+    union {
+        long num;
+        unsigned char uc[sizeof(long)];
+    } u;
+    u.num = 1;
+    if (u.uc[0] == 1) {
+        return false;
+    }
+    else {
+        return true;
     }
 }

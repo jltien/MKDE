@@ -46,7 +46,6 @@ const int DOUBLE_BYTES = 8;        // the number of bytes in a double floating p
 *******************************************************************************/
 
 // machine check functions
-bool isMachineBigEndian(void);
 bool numDataBytesOK (void);
 
 #define SwapBytes(x) ByteSwap((unsigned char *) &x, sizeof(x))
@@ -115,6 +114,7 @@ inline bool isProperBoolString(char * tmpString) {
 long getFileSize(char * file_name);
 char * loadBinaryFile(char * f_name);
 void testLBF(char * test_file);
+bool isMachineBigEndian(void);
 
 #endif
 

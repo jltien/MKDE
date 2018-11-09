@@ -21,8 +21,7 @@
 
 #include "basicDefinitions.h"
 #include "basicFunctions.h"
-#include "file_io.h"    // byte swapping functions
-
+#include "file_io.h"
 #include <iostream>   // not required by most systems
 #include <fstream>
 #include <iomanip>
