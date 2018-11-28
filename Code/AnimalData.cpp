@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#include "Raster/pairwiseFunctions.h"
 
 struct AnimalData {
 public:
@@ -14,12 +15,15 @@ public:
     double ymax;
     double zmin;
     double zmax;
+    time_t tmin;        // the earliest time, epoch
+    time_t tmax;        // the latest time, epoch
     std::vector<double> x;
     std::vector<double> y;
     std::vector<double> z;
+    std::vector<pointIn3D> xyz;
     std::vector<double> t; // minutes elapsed
     std::vector<struct tm> tm;
-    std::vector<time_t> epoch_t;
+    std::vector<time_t> epoch_seconds;
     std::vector<bool> use;
     std::vector<double> ObsVarXY;
     std::vector<double> ObsVarZ;
@@ -31,8 +35,10 @@ public:
         std::vector<double> * x = new std::vector<double>();
         std::vector<double> * y = new std::vector<double>();
         std::vector<double> * z = new std::vector<double>();
+        std::vector<pointIn3D> * xyz = new std::vector<pointIn3D>();
         std::vector<double> * t = new std::vector<double>();
-        std::vector<double>  * tm = new std::vector<double>();
+        std::vector<double> * tm = new std::vector<double>();
+        std::vector<double> * epoch_seconds = new std::vector<double>();
         std::vector<double> * use = new std::vector<double>();
         std::vector<double> * ObsVarXY = new std::vector<double>();
         std::vector<double> * ObsVarZ = new std::vector<double>();

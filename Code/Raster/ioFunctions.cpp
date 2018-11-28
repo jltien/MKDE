@@ -1,9 +1,11 @@
 using namespace std;
 /*****************************************************************************
- * Takes an animal data file with an id(string), x(double), y(double), and
- * z(double) and parses the data into a vector of vector of the data. The outer
+ * Takes an animal data file with an id(string), x(double), y(double),
+ * z(double), minutes(double), ObsVarXY(double), ObsVarZ(double), MoveVarXY(double),
+ * MoveVarZ(double), and parses the data into a vector of vector of the data. The outer
  * vector's elements are unique animals and the inner vector has a single
  * animal's data entries. Returns true if successful, false if unsuccessful.
+ * MUST HAVE 10 ARGUMENTS IN THAT ORDER!!!
  *****************************************************************************/
 unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
     unordered_map<string, AnimalData *> *animals = new unordered_map<string, AnimalData *>();
@@ -17,7 +19,6 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         string s;
 
         if (!getline(infile, s)) break;
-
         // Skip the file header
         if (have_header) {
             have_header = false;
@@ -64,9 +65,10 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             new_animal->x.push_back(x);
             new_animal->y.push_back(y);
             new_animal->z.push_back(z);
+            new_animal->xyz.push_back(pointIn3D(x, y, z, t));
             new_animal->t.push_back(t);
             new_animal->tm.push_back(tm);
-            new_animal->epoch_t.push_back(epoch);
+            new_animal->epoch_seconds.push_back(epoch);
             new_animal->ObsVarXY.push_back(obs_var_xy);
             new_animal->ObsVarZ.push_back(obs_var_z);
             new_animal->MoveVarXY.push_back(mov_var_xy);
@@ -94,9 +96,11 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         double xmin = numeric_limits<double>::max();
         double ymin = numeric_limits<double>::max();
         double zmin = numeric_limits<double>::max();
+        time_t tmin = numeric_limits<time_t>::max();
         double xmax = 0;
         double ymax = 0;
         double zmax = 0;
+        time_t tmax = 0;
 
         for (int i = 0; i < it->second->x.size(); ++i) {
             if (it->second->x[i] < xmin) {
@@ -117,6 +121,12 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             if (it->second->z[i] > zmax) {
                 zmax = it->second->z[i];
             }
+            if (it->second->epoch_seconds[i] < tmin) {
+                tmin = it->second->epoch_seconds[i];
+            }
+            if (it->second->epoch_seconds[i] > tmax) {
+                tmax = it->second->epoch_seconds[i];
+            }
         }
         it->second->xmin = xmin;
         it->second->xmax = xmax;
@@ -124,6 +134,8 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         it->second->ymax = ymax;
         it->second->zmin = zmin;
         it->second->zmax = zmax;
+        it->second->tmin = tmin;
+        it->second->tmax = tmax;
     }
 
     return animals;

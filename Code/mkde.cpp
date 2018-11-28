@@ -10,7 +10,52 @@ int main() {
     vector<double> iloc_a = assignLocationIndexToTimeGrid(tgrid, tloc_a, 10000);
     for (int i = 0; i < iloc_a.size(); i++) {
         cout << iloc_a[i] << endl;
+    }
+    */
+/*
+    unordered_map<string, AnimalData *> *animals;
+    animals = fileRead("/Users/joycetien/Desktop/test/samepoints.txt");
+
+    vector<AnimalData *> data;
+
+    for (auto it = animals->begin(); it != animals->end(); it++) {
+        vector<time_t> tgrid;
+        for (time_t i = it->second->tmin; i <= it->second->tmax; i = i + 3600) {
+            tgrid.push_back(i);
+        }
+        data.push_back(it->second);
+        vector<double> ans = assignLocationIndexToTimeGrid(tgrid, it->second->epoch_seconds, 1000000);
+
+        for (int i = 0; i < ans.size(); i++) {
+            cout << "ans: " << ans[i] << endl;
+        }
+
+        vector<pointIn3D> ans1 = interpolateCoordinateOnTimeGrid(tgrid, ans, it->second->epoch_seconds, it->second->xyz);
+        for (int i = 0; i < ans.size(); i++) {
+            cout << "ans1: " << ans1[i].x << " " << ans1[i].y << " " << ans1[i].z << endl;
+        }
+
     } */
+    /*
+    vector<time_t> tgrid;
+    for (time_t i = 1; i < 12; i++) {
+        tgrid.push_back(i);
+    }
+    vector<time_t> location;
+    location.push_back(2.5);
+    location.push_back(4);
+    location.push_back(7);
+    vector<double> ans = assignLocationIndexToTimeGrid(tgrid, location, 1000);
+    for (int i = 0; i < ans.size(); i++) {
+        cout << "tgrid: " << tgrid[i] <<"   ans: " << ans[i] << endl;
+    } */
+/*
+    vector<double> dist = euclideanDistance(data[0]->xyz, data[1]->xyz, false);
+
+    for (int i = 0; i < dist.size(); i++) {
+        cout << dist[i] << endl;
+    }
+*/
 
     unordered_map<string, AnimalData *> *animals;
     animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
@@ -87,8 +132,8 @@ int main() {
     for (auto it = animals->begin(); it != animals->end(); ++it) {
         updateTime(it->second);
         withinBounds(it->second, 4320);
-        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
-               grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh);
+/*        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+               grid_x, grid_y, it->second->MoveVarXY, it->second->ObsVarXY, t_step, pdf_thresh); */
 
 
         rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
@@ -529,7 +574,7 @@ double integrateNormal(double x0, double x1, double mu, double sigma) {
 void withinBounds(AnimalData * animal, long minutes) {
     int bound = minutes * 60;
     for (int i = 1; i < animal->t.size(); i++) {
-        if (animal->epoch_t[i] - animal->epoch_t[i - 1] >= bound) {
+        if (animal->epoch_seconds[i] - animal->epoch_seconds[i - 1] >= bound) {
             animal->use[i] = false;
             animal->use[i - 1] = false;
         }
@@ -540,8 +585,8 @@ void withinBounds(AnimalData * animal, long minutes) {
  * Helper functions to adjust time relative to the first observation time.
  *****************************************************************************/
 void updateTime(AnimalData * animal) {
-    for (int i = 0; i < animal->epoch_t.size(); i++) {
-        animal->epoch_t[i] = animal->epoch_t[i] - animal->epoch_t[0];
+    for (int i = 0; i < animal->epoch_seconds.size(); i++) {
+        animal->epoch_seconds[i] = animal->epoch_seconds[i] - animal->epoch_seconds[0];
     }
 }
 
