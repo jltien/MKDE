@@ -27,7 +27,10 @@ using namespace std;
 
 const double MY_PI = 3.141592653589793;
 const double MY_EPS = 0.00000001;
+const double INT_EPS = 1.0e-6;
+const double RSQRT2PI = 0.39894228040143267793994605993438; // 1/sqrt(2*pi)
 
+const int JMAX = 20;
 
 gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       const vector<double> &Y, const vector<bool> &use,
@@ -35,12 +38,31 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       vector<double> &move_var, vector<double> &obs_var,
                       double t_step, double pdf_thresh);
 
+gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> &X0, vector<double> &Y0,
+                                  const vector<double> &X1, const vector<double> &Y1, const vector<bool> &isValid,
+                                  const vector<double> &xGrid, const vector<double> &yGrid,
+                                  const vector<double> &msig2xy0, const vector<double> &msig2xy1,
+                                  const vector<double> &osig2xy0, const vector<double> &osig2xy1,
+                                  const vector<double> &stepT, const vector<double> &pdfMin);
+
 gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
                              const vector<double> &Y, const vector<double> &Z, const vector<bool> &use,
                              const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
-                             const gridFloat * zMin, const gridFloat * zMax, const vector<double> &msig2xy,
+                             gridFloat * zMin, gridFloat * zMax, const vector<double> &msig2xy,
                              const vector<double> &msig2z, const vector<double> &osig2xy, const vector<double> &osig2z,
                              const vector<double> &t_step, const vector<double> &pdf_thresh);
+
+/*
+gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double> &X0, const vector<double> &Y0,
+                                    const vector<double> &Z0, const vector<double> &X1, const vector<double> &Y1,
+                                    const vector<double> &Z1, const vector<bool> &isValid, const vector<double> &xgrid,
+                                    const vector<double> &ygrid, const vector<double> &zgrid, gridFloat *zMin,
+                                    gridFloat *zMax, const vector<double> &msig2xy0, const vector<double> &msig2xy1,
+                                    const vector<double> &msig2z0, const vector<double> &msig2z1, const vector<double> &osig2xy0,
+                                    const vector<double> &osig2xy1, const vector<double> &osig2z0, const vector<double> &osig2z1,
+                                    const vector<double> &stepT, const vector<double> &pdfMin);
+*/
+
 
 int coordToIndex(double x, double minGridCoord, double cellSz);
 double univariateNormalDensityThreshold(double p, double sigma2);
@@ -54,6 +76,9 @@ bool isMachineBigEndian();
 inline bool doubleEquals(double a, double b);
 void withinBounds(AnimalData * animal, long minutes);
 void updateTime(AnimalData * animal);
+double kernelBC(double x, double mu1, double sigma1sq, double mu2, double sigma2sq);
+double trapzdKernelBC(double x0, double x1, double mu1, double sigma1sq, double mu2, double sigma2sq, int n, double old_s);
+double integrateKernelBC(double x0, double x1, double mu1, double sigma1, double mu2, double sigma2, double pThresh);
 
 inline bool doubleEquals(double a, double b) {
     return fabs(a - b) < MY_EPS;
