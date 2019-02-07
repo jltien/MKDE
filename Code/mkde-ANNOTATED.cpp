@@ -552,7 +552,7 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
     int nObs = T.size();
     static int num_grids = 0;
 
-    // grid speces
+    // grid specs
     int nX = xGrid.size();
     int nY = yGrid.size();
     long nCells = (long) nX * nY;
@@ -618,7 +618,7 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
                  * INTEGRATION TIME STEP AS OUTPUT FROM THE INTERACTION 
                  * FUNCTION. SO WE SHOULD JUST BE ABLE TO LOOK THEM UP.
                  */
-                alpha = (t - t0) / dt;
+                alpha = (t - t0) / dt; // **** MAY HAVE ALREADY BEEN PROVIDED AS AN ARGUMENT
                 // Calculate parameters for bilinear interpolation
                 sig2xy0 = dt * alpha * (1.0 - alpha) * msig2xy0[j] +
                           osig2xy0[j] * (1.0 - alpha) * (1.0 - alpha) +
