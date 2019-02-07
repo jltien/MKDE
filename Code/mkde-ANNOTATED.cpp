@@ -526,6 +526,28 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
                                  const vector<double> &msig2xy0, const vector<double> &msig2xy1,
                                  const vector<double> &osig2xy0, const vector<double> &osig2xy1,
                                  const vector<double> &stepT, const vector<double> &pdfMin) {
+  
+  /*
+   * COMMENTS ON ARGS:
+   * 
+   * The following are based on output fron the interaction function:
+   * T
+   * X0
+   * Y0
+   * X1
+   * Y1
+   * isValid
+   * 
+   * We should probably also add a vector for the following results from the interaction function
+   * Alpha (unless we already calcuated msig2xy0 and msig2xy1 for each 
+   *   integration time step in the interaction function, but I don't 
+   *   think we did)
+   * 
+   * stepT (the integration time step) was a double scalar, but I don't believe we need it because this because
+   * this value was used in the interaction function to generate the grid of times (so stepT= T[1] - T[0])
+   * 
+   * pdfMin only needs to be a double scalar (not a vector). I mean, it can be a vector of length 1.
+   */
 
     int nObs = T.size();
     static int num_grids = 0;
