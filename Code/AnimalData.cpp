@@ -23,12 +23,13 @@ public:
     std::vector<pointIn3D> xyz;
     std::vector<double> t; // minutes elapsed
     std::vector<struct tm> tm;
-    std::vector<time_t> epoch_seconds;
+    std::vector<time_t> epochSeconds;
     std::vector<bool> use;
-    std::vector<double> ObsVarXY;
-    std::vector<double> ObsVarZ;
-    std::vector<double> MoveVarXY;
-    std::vector<double> MoveVarZ;
+    std::vector<double> obsVarXY;
+    std::vector<double> obsVarZ;
+    std::vector<double> moveVarXY;
+    std::vector<double> moveVarZ;
+
 
     AnimalData(std::string id_name) {
         id = id_name;
@@ -38,11 +39,11 @@ public:
         std::vector<pointIn3D> * xyz = new std::vector<pointIn3D>();
         std::vector<double> * t = new std::vector<double>();
         std::vector<double> * tm = new std::vector<double>();
-        std::vector<double> * epoch_seconds = new std::vector<double>();
+        std::vector<double> * epochSeconds = new std::vector<double>();
         std::vector<double> * use = new std::vector<double>();
-        std::vector<double> * ObsVarXY = new std::vector<double>();
-        std::vector<double> * ObsVarZ = new std::vector<double>();
-        std::vector<double> * MoveVarXY = new std::vector<double>();
-        std::vector<double> * MoveVarZ = new std::vector<double>();
+        std::vector<double> * obsVarXY = new std::vector<double>();
+        std::vector<double> * obsVarZ = new std::vector<double>();
+        std::vector<double> * moveVarXY = new std::vector<double>();
+        std::vector<double> * moveVarZ = new std::vector<double>();
     }
 };

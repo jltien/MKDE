@@ -4,11 +4,11 @@
 // Associates the observed points with the interpolated coordinates
 std::vector<double> assignLocationIndexToTimeGrid(const std::vector<time_t> grid_times,
                                                const std::vector<time_t> location_times, double dt_max) {
-    int NA_INDEX = -1;
+    double NA_INDEX = NAN;
     double m = grid_times.size();
     double n = location_times.size();
     double j = 0;
-    std::vector<double> location_indexes(m, NAN);
+    std::vector<double> location_indexes(m, NA_INDEX);
 
     for (int i = 0; i < m; i++) {
         while (location_times[j + 1] < grid_times[i]) {
@@ -18,7 +18,7 @@ std::vector<double> assignLocationIndexToTimeGrid(const std::vector<time_t> grid
                 break; // can't increment j any more
             }
         }
-        if (location_times[j] <= grid_times[i] && location_times[j+1] > grid_times[i]) {
+        if ((location_times[j] <= grid_times[i]) && (location_times[j+1] > grid_times[i])) {
             if ((location_times[j+1] - location_times[j]) <= dt_max) {
                 location_indexes[i] = j;
             }
@@ -27,29 +27,46 @@ std::vector<double> assignLocationIndexToTimeGrid(const std::vector<time_t> grid
             location_indexes[i] = j + 1;
         }
     }
+
     return location_indexes;
 }
 
 
 std::vector<pointIn3D> interpolateCoordinateOnTimeGrid(const std::vector<time_t> & grid_times, const std::vector<double> & location_indexes,
-                                                 const std::vector<time_t> & location_times, const std::vector<pointIn3D> & location_xyz) {
-    int NA_INDEX = -1;
+                                                       const std::vector<time_t> & location_times, const std::vector<pointIn3D> & location_xyz,
+                                                       const std::vector<double> moveVarXY, const std::vector<double> moveVarZ,
+                                                       const std::vector<double> obsVarXY, const std::vector<double> obsVarZ) {
+    double NA_INDEX = NAN;
     int m = grid_times.size();
     int n = location_times.size();
-    std::vector<double> res_x(m, NAN);
-    std::vector<double> res_y(m, NAN);
-    std::vector<double> res_z(m, NAN);
+    double alpha_j, sig2xy, sig2z, dt;
+    std::vector<double> res_x(m, NA_INDEX);
+    std::vector<double> res_y(m, NA_INDEX);
+    std::vector<double> res_z(m, NA_INDEX);
     std::vector<pointIn3D> res_xyz;
 
     for (int i = 0; i < grid_times.size(); i++) {
-        int j = location_indexes[i];
+        double j = location_indexes[i];
         if (j != NA_INDEX && j <= (n-2)) {
-            double alpha_j = (grid_times[i] - location_times[j])/(location_times[j+1] - location_times[j]);
-            res_x[i] = location_xyz[j].x + alpha_j*(location_xyz[j+1].x - location_xyz[j].x);
-            res_y[i] = location_xyz[j].y + alpha_j*(location_xyz[j+1].y - location_xyz[j].y);
-            res_z[i] = location_xyz[j].z + alpha_j*(location_xyz[j+1].z - location_xyz[j].z);
-            res_xyz.push_back(pointIn3D(res_x[i], res_y[i], res_z[i], grid_times[i], alpha_j));
+
+            if (location_times[j + 1] - location_times[j] != 0) {
+                alpha_j = (grid_times[i] - location_times[j]) * 1.0 / (location_times[j + 1] - location_times[j]);
+            }
+            else {
+                alpha_j = 0;
+            }
+            res_x[i] = location_xyz[j].x + alpha_j * (location_xyz[j + 1].x - location_xyz[j].x);
+            res_y[i] = location_xyz[j].y + alpha_j * (location_xyz[j + 1].y - location_xyz[j].y);
+            res_z[i] = location_xyz[j].z + alpha_j * (location_xyz[j + 1].z - location_xyz[j].z);
+
+            dt = grid_times[j + 1] - grid_times[j];
+            sig2xy = dt * alpha_j * (1.0 - alpha_j) * moveVarXY[j] + obsVarXY[j] * (1.0 - alpha_j)
+                                                                     * (1.0 - alpha_j) + obsVarXY[j + 1] * alpha_j * alpha_j;
+            sig2z = dt * alpha_j * (1.0 - alpha_j) * moveVarZ[j] + obsVarZ[j] * (1.0 - alpha_j)
+                                                                     * (1.0 - alpha_j) + obsVarZ[j + 1] * alpha_j * alpha_j;
         }
+     //   std::cout << alpha_j << std::endl;
+        res_xyz.push_back(pointIn3D(res_x[i], res_y[i], res_z[i], grid_times[i], alpha_j, sig2xy, sig2z));
     }
 
     // return alpha_j with each tuple

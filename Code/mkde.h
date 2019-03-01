@@ -41,9 +41,8 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
 gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> &X0, vector<double> &Y0,
                                   const vector<double> &X1, const vector<double> &Y1, const vector<bool> &isValid,
                                   const vector<double> &xGrid, const vector<double> &yGrid,
-                                  const vector<double> &msig2xy0, const vector<double> &msig2xy1,
-                                  const vector<double> &osig2xy0, const vector<double> &osig2xy1,
-                                  const vector<double> &stepT, const vector<double> &pdfMin);
+                                  const vector<pointIn3D> &alpha_0, const vector<pointIn3D> &alpha_1,
+                                  const double &pdfMin);
 
 gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
                              const vector<double> &Y, const vector<double> &Z, const vector<bool> &use,
@@ -60,7 +59,7 @@ gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double
                                     gridFloat *zMax, const vector<double> &msig2xy0, const vector<double> &msig2xy1,
                                     const vector<double> &msig2z0, const vector<double> &msig2z1, const vector<double> &osig2xy0,
                                     const vector<double> &osig2xy1, const vector<double> &osig2z0, const vector<double> &osig2z1,
-                                    const vector<double> &stepT, const vector<double> &pdfMin);
+                                    const vector<double> &stepT, const double &pdfMin);
 */
 
 

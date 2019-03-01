@@ -68,11 +68,11 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             new_animal->xyz.push_back(pointIn3D(x, y, z, t));
             new_animal->t.push_back(t);
             new_animal->tm.push_back(tm);
-            new_animal->epoch_seconds.push_back(epoch);
-            new_animal->ObsVarXY.push_back(obs_var_xy);
-            new_animal->ObsVarZ.push_back(obs_var_z);
-            new_animal->MoveVarXY.push_back(mov_var_xy);
-            new_animal->MoveVarZ.push_back(mov_var_z);
+            new_animal->epochSeconds.push_back(epoch);
+            new_animal->obsVarXY.push_back(obs_var_xy);
+            new_animal->obsVarZ.push_back(obs_var_z);
+            new_animal->moveVarXY.push_back(mov_var_xy);
+            new_animal->moveVarZ.push_back(mov_var_z);
         }
     }
 
@@ -121,11 +121,11 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             if (it->second->z[i] > zmax) {
                 zmax = it->second->z[i];
             }
-            if (it->second->epoch_seconds[i] < tmin) {
-                tmin = it->second->epoch_seconds[i];
+            if (it->second->epochSeconds[i] < tmin) {
+                tmin = it->second->epochSeconds[i];
             }
-            if (it->second->epoch_seconds[i] > tmax) {
-                tmax = it->second->epoch_seconds[i];
+            if (it->second->epochSeconds[i] > tmax) {
+                tmax = it->second->epochSeconds[i];
             }
         }
         it->second->xmin = xmin;
