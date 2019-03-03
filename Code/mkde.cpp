@@ -1,63 +1,6 @@
 #include "mkde.h"
 
 int main() {
-/* test code for pairwise functions
-    vector<double> tgrid;
-    for (double i = 50.0; i <= 200.0; i++) {
-        tgrid.push_back(i);
-    }
-    vector<double> tloc_a = {75.2, 80.1, 85.2, 90.2, 95.1, 100.3, 105.2, 115.1, 120.2, 125.1, 130.3, 140.3, 145.1,
-            150.3, 155.1, 160.2, 180.1, 185.2, 190.2, 195.1, 200.2, 205.1};
-    vector<double> iloc_a = assignLocationIndexToTimeGrid(tgrid, tloc_a, 10000);
-    for (int i = 0; i < iloc_a.size(); i++) {
-        cout << iloc_a[i] << endl;
-    }
-    */
-/*
-    unordered_map<string, AnimalData *> *animals;
-    animals = fileRead("/Users/joycetien/Desktop/test/samepoints.txt");
-
-    vector<AnimalData *> data;
-
-    for (auto it = animals->begin(); it != animals->end(); it++) {
-        vector<time_t> tgrid;
-        for (time_t i = it->second->tmin; i <= it->second->tmax; i = i + 3600) {
-            tgrid.push_back(i);
-        }
-        data.push_back(it->second);
-        vector<double> ans = assignLocationIndexToTimeGrid(tgrid, it->second->epochSeconds, 1000000);
-
-        for (int i = 0; i < ans.size(); i++) {
-            cout << "ans: " << ans[i] << endl;
-        }
-
-        vector<pointIn3D> ans1 = interpolateCoordinateOnTimeGrid(tgrid, ans, it->second->epochSeconds, it->second->xyz);
-        for (int i = 0; i < ans.size(); i++) {
-            cout << "ans1: " << ans1[i].x << " " << ans1[i].y << " " << ans1[i].z << endl;
-        }
-
-    } */
-    /*
-    vector<time_t> tgrid;
-    for (time_t i = 1; i < 12; i++) {
-        tgrid.push_back(i);
-    }
-    vector<time_t> location;
-    location.push_back(2.5);
-    location.push_back(4);
-    location.push_back(7);
-    vector<double> ans = assignLocationIndexToTimeGrid(tgrid, location, 1000);
-    for (int i = 0; i < ans.size(); i++) {
-        cout << "tgrid: " << tgrid[i] <<"   ans: " << ans[i] << endl;
-    } */
-/*
-    vector<double> dist = euclideanDistance(data[0]->xyz, data[1]->xyz, false);
-
-    for (int i = 0; i < dist.size(); i++) {
-        cout << dist[i] << endl;
-    }
-*/
-
     unordered_map<string, AnimalData *> *animals;
     animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
 
@@ -69,10 +12,8 @@ int main() {
     vector<double> obs_var;
     gridFloat * rst;
     gridFloat3D *rst3d;
-
     double t_step = 1.0;
     double pdf_thresh = pow(10.0, -14);
-
     vector<double> t_step3d;
 
     // find the lowest and highest x, y, z for all animals
@@ -118,11 +59,9 @@ int main() {
     for (double i = ymin - 2000; i < ymax + 2000; i = i + 250) {
         grid_y.push_back(i);
     }
-
     for (double i = 0; i < zmax + 2000; i = i + 500) {
         grid_z.push_back(i);
     }
-
     for (time_t i = tmin; i < tmax; i = i + 2000) {
         grid_t.push_back(i);
     }
@@ -132,7 +71,7 @@ int main() {
         obs_var.push_back(0.1);
         t_step3d.push_back(1.0);
     }
-/*
+
     // set up zmin and zmax
     gridFloat *high = new gridFloat(1, grid_x.size(), grid_y.size(), xmin, ymin, grid_x[1] - grid_x[0]);
     high->setAllCellsTo(zmax);
@@ -143,8 +82,8 @@ int main() {
     for (auto it = animals->begin(); it != animals->end(); ++it) {
         updateTime(it->second);
         withinBounds(it->second, 4320);
-        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
-               grid_x, grid_y, it->second->moveVarXY, it->second->obsVarXY, t_step, pdf_thresh);
+//        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+//               grid_x, grid_y, it->second->moveVarXY, it->second->obsVarXY, t_step, pdf_thresh);
 
 
         rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
@@ -153,8 +92,8 @@ int main() {
                               pdf_thresh);
 
 
-//        string filename = it->first + ".vtk";
-//        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "test data");
+        string filename = it->first + ".vtk";
+        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "test data");
 
 
 //        string filename = it->first + ".grass";
@@ -164,7 +103,7 @@ int main() {
 //        writeMKDE3DtoXDMF(grid_x, grid_y, grid_z, rst3d, "test", filename);
 
     }
-*/
+/*
     // test interaction code
     vector<AnimalData *> avec;
     for (auto it = animals->begin(); it != animals->end(); ++it) {
@@ -177,12 +116,16 @@ int main() {
                                                                 avec[0]->obsVarXY, avec[0]->obsVarZ);
     vector<pointIn3D> alpha_1 = interpolateCoordinateOnTimeGrid(grid_t, indexes1, avec[1]->epochSeconds,
                                                                 avec[1]->xyz, avec[1]->moveVarXY, avec[1]->moveVarZ,
-                                                                avec[1]->obsVarXY, avec[1]->obsVarZ);
-    rst = mkde2dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[1]->x, avec[1]->y, avec[0]->use,
-                                grid_x, grid_y, alpha_0, alpha_1, pdf_thresh);
+                                                                avec[1]->obsVarXY, avec[1]->obsVarZ); */
+//    rst = mkde2dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[1]->x, avec[1]->y, avec[0]->use,
+//                                grid_x, grid_y, alpha_0, alpha_1, pdf_thresh);
 
-    int xSz = grid_x[1] - grid_x[0];
-    int ySz = grid_y[1] - grid_y[0];
+//    rst3d = mkde3dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[0]->z, avec[1]->x, avec[1]->y, avec[1]->z,
+//                                  avec[0]->use, grid_x, grid_y, grid_z, low, high, alpha_0, alpha_1, pdf_thresh);
+//    int xSz = grid_x[1] - grid_x[0];
+//    int ySz = grid_y[1] - grid_y[0];
+//            string filename = "interaction3dtest.vtk";
+//        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "testing interaction3D");
 
 /*    for (double eX = xmin; eX < xmax; eX = eX + xSz) {
         for (double eY = ymin; eY < ymax; eY = eY + ySz) {
@@ -352,7 +295,7 @@ gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
                             const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
                             gridFloat *zMin, gridFloat *zMax, const vector<double> &msig2xy,
                             const vector<double> &msig2z, const vector<double> &osig2xy, const vector<double> &osig2z,
-                            const vector<double> &t_step, const vector<double> &pdf_thresh) {
+                            const vector<double> &t_step, const double &pdf_thresh) {
 
     int nObs = T.size();
 
@@ -426,10 +369,10 @@ gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
                 i2k = coordToIndex(eY, ygrid[0], ySz);
                 i3k = coordToIndex(eZ, zgrid[0], zSz);
 
-                distMaxXY = univariateNormalDensityThreshold(pdf_thresh[0], sig2xy);
+                distMaxXY = univariateNormalDensityThreshold(pdf_thresh, sig2xy);
                 halo1 = ceil(distMaxXY / xSz);
                 halo2 = ceil(distMaxXY / ySz);
-                distMaxZ = univariateNormalDensityThreshold(pdf_thresh[0], sig2z);
+                distMaxZ = univariateNormalDensityThreshold(pdf_thresh, sig2z);
                 halo3 = ceil(distMaxZ / zSz);
 
                 // Precompute voxel density in y dimension
@@ -590,71 +533,76 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
     totalT = 0.0;
     for (int j = 0; j < T.size(); j++) {
         cout << "\tProcessing move step " << (j + 1) << " of " << T.size() << endl;
-        // halo
-        distMaxXY0 = univariateNormalDensityThreshold(pdfMin, alpha_0[j].sig2xy); // ADD
-        distMaxXY1 = univariateNormalDensityThreshold(pdfMin, alpha_1[j].sig2xy); // ADD
+        if (isValid[1] == 1) {
+            // halo
+            distMaxXY0 = univariateNormalDensityThreshold(pdfMin, alpha_0[j].sig2xy); // ADD
+            distMaxXY1 = univariateNormalDensityThreshold(pdfMin, alpha_1[j].sig2xy); // ADD
 
-        // x
-        haloMinX = std::min(alpha_0[j].x - distMaxXY0, alpha_1[j].x - distMaxXY1); // ADD
-        haloMaxX = std::max(alpha_0[j].x + distMaxXY0, alpha_1[j].x + distMaxXY1); // ADD
-        halo1min = coordToIndex(haloMinX, xGrid[0], xSz); // ADD
-        halo1max = coordToIndex(haloMaxX, xGrid[0], xSz); // ADD
+            // x
+            haloMinX = std::min(alpha_0[j].x - distMaxXY0, alpha_1[j].x - distMaxXY1); // ADD
+            haloMaxX = std::max(alpha_0[j].x + distMaxXY0, alpha_1[j].x + distMaxXY1); // ADD
+            halo1min = coordToIndex(haloMinX, xGrid[0], xSz); // ADD
+            halo1max = coordToIndex(haloMaxX, xGrid[0], xSz); // ADD
 
-        // y
-        haloMinY = std::min(alpha_0[j].y - distMaxXY0, alpha_1[j].y - distMaxXY1); // ADD
-        haloMaxY = std::max(alpha_0[j].y + distMaxXY0, alpha_1[j].y + distMaxXY1); // ADD
-        halo2min = coordToIndex(haloMinY, yGrid[0], ySz); // ADD
-        halo2max = coordToIndex(haloMaxY, yGrid[0], ySz); // ADD
+            // y
+            haloMinY = std::min(alpha_0[j].y - distMaxXY0, alpha_1[j].y - distMaxXY1); // ADD
+            haloMaxY = std::max(alpha_0[j].y + distMaxXY0, alpha_1[j].y + distMaxXY1); // ADD
+            halo2min = coordToIndex(haloMinY, yGrid[0], ySz); // ADD
+            halo2max = coordToIndex(haloMaxY, yGrid[0], ySz); // ADD
 
-        // Precompute voxel density in y dimension
-        for (int i2 = 0; i2 < nY; i2++) {
-            yprob0[i2] = integrateNormal(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_0[j].y, sqrt(alpha_0[j].sig2xy));
-            yprob1[i2] = integrateNormal(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_1[j].y, sqrt(alpha_1[j].sig2xy));
-            ybhattdist[i2] = integrateKernelBC(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_0[j].y, sqrt(alpha_0[j].sig2xy),
-                                               alpha_1[j].y, sqrt(alpha_1[j].sig2xy), pdfMin);
-        }
-        bhattaFact = (RSQRT2PI * RSQRT2PI) / (sqrt(alpha_0[j].sig2xy) * sqrt(alpha_1[j].sig2xy));
+            // Precompute voxel density in y dimension
+            for (int i2 = 0; i2 < nY; i2++) {
+                yprob0[i2] = integrateNormal(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_0[j].y,
+                                             sqrt(alpha_0[j].sig2xy));
+                yprob1[i2] = integrateNormal(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_1[j].y,
+                                             sqrt(alpha_1[j].sig2xy));
+                ybhattdist[i2] = integrateKernelBC(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_0[j].y,
+                                                   sqrt(alpha_0[j].sig2xy),
+                                                   alpha_1[j].y, sqrt(alpha_1[j].sig2xy), pdfMin);
+            }
+            bhattaFact = (RSQRT2PI * RSQRT2PI) / (sqrt(alpha_0[j].sig2xy) * sqrt(alpha_1[j].sig2xy));
 
-        for (int i1 = std::max(0, halo1min); i1 < std::min(nX, halo1max); i1++) { // x-dimension
-            double voxx = xGrid[i1]; // voxel x
-            double xprob0 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_0[j].x, sqrt(alpha_0[j].sig2xy));
-            double xprob1 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_1[j].x, sqrt(alpha_1[j].sig2xy));
-            double xbhattdist = integrateKernelBC(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_0[j].x,
-                                                  sqrt(alpha_0[j].sig2xy), alpha_1[j].x, sqrt(alpha_1[j].sig2xy), pdfMin);
-            for (int i2 = std::max(0, halo2min); i2 < std::min(nY, halo2max); i2++) { // y-dimension
-                double voxy = yGrid[i2]; // voxel y
-                // Calculate contribution of kernel to voxel
-                double pXY0 = xprob0 * yprob0[i2];
-                double pXY1 = xprob1 * yprob1[i2];
-                double pXY = xbhattdist * ybhattdist[i2] * bhattaFact;
+            for (int i1 = std::max(0, halo1min); i1 < std::min(nX, halo1max); i1++) { // x-dimension
+                double voxx = xGrid[i1]; // voxel x
+                double xprob0 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_0[j].x,
+                                                sqrt(alpha_0[j].sig2xy));
+                double xprob1 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_1[j].x,
+                                                sqrt(alpha_1[j].sig2xy));
+                double xbhattdist = integrateKernelBC(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_0[j].x,
+                                                      sqrt(alpha_0[j].sig2xy), alpha_1[j].x, sqrt(alpha_1[j].sig2xy),
+                                                      pdfMin);
+                for (int i2 = std::max(0, halo2min); i2 < std::min(nY, halo2max); i2++) { // y-dimension
+                    double voxy = yGrid[i2]; // voxel y
+                    // Calculate contribution of kernel to voxel
+                    double pXY0 = xprob0 * yprob0[i2];
+                    double pXY1 = xprob1 * yprob1[i2];
+                    double pXY = xbhattdist * ybhattdist[i2] * bhattaFact;
 
-  //              cout << "xbhatt: " << xbhattdist << "    ybhatt: " << ybhattdist[i2] << "   fact: " << bhattaFact << endl;
-                // update (trapezoid rule)
-                double tmpDens, tmpDens0, tmpDens1;
-                if (doubleEquals(t, t0)) { // first term
-                    tmpDens = stepT * pXY / 2.0;
-                    tmpDens0 = stepT * pXY0 / 2.0;
-                    tmpDens1 = stepT * pXY1 / 2.0;
-                } else if (doubleEquals(t, t1)) { // last term
-                    tmpDens = (t - tOld) * pXY / 2.0;
-                    tmpDens0 = (t - tOld) * pXY0 / 2.0;
-                    tmpDens1 = (t - tOld) * pXY1 / 2.0;
-                } else { // intermediate terms
-                    tmpDens = stepT * pXY;
-                    tmpDens0 = stepT * pXY0;
-                    tmpDens1 = stepT * pXY1;
+                    // update (trapezoid rule)
+                    double tmpDens, tmpDens0, tmpDens1;
+                    if (doubleEquals(t, t0)) { // first term
+                        tmpDens = stepT * pXY / 2.0;
+                        tmpDens0 = stepT * pXY0 / 2.0;
+                        tmpDens1 = stepT * pXY1 / 2.0;
+                    } else if (doubleEquals(t, t1)) { // last term
+                        tmpDens = (t - tOld) * pXY / 2.0;
+                        tmpDens0 = (t - tOld) * pXY0 / 2.0;
+                        tmpDens1 = (t - tOld) * pXY1 / 2.0;
+                    } else { // intermediate terms
+                        tmpDens = stepT * pXY;
+                        tmpDens0 = stepT * pXY0;
+                        tmpDens1 = stepT * pXY1;
+                    }
+
+                    // Add contribution to voxel (removed Kahan summation for now)
+                    double eX = indexToCellCenterCoord(i1, xmin, xSz);
+                    double eY = indexToCellCenterCoord(i2, ymin, ySz);
+                    mkde->addValueToGridCell(eX, eY,tmpDens);
+                    W0 += tmpDens0;
+                    W1 += tmpDens1;
                 }
-
-                // Add contribution to voxel (removed Kahan summation for now)
-                double eX = indexToCellCenterCoord(i1, xmin, xSz);
-                double eY = indexToCellCenterCoord(i2, ymin, ySz);
-                mkde->setGridValue(eX, eY, mkde->getGridValue(eX, eY) + tmpDens);
-                W0 += tmpDens0;
-                W1 += tmpDens1;
             }
         }
-        // update the eval time (t) and stopping conditions
-
     }
 // divide by totalT
     double maxDist = 0.0, sumDens = 0.0;
@@ -683,30 +631,28 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
    same voxel, not at the exact same location.  To compute the probability of
    occurrence at the same point within a voxel, we will have to integrate the
    product of the two kernels over the volume of the voxel */
-/*
 gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double> &X0, const vector<double> &Y0,
                                     const vector<double> &Z0, const vector<double> &X1, const vector<double> &Y1,
-                                    const vector<double> &Z1, const vector<bool> &isValid, const vector<double> &xgrid,
-                                    const vector<double> &ygrid, const vector<double> &zgrid, gridFloat *zMin,
-                                    gridFloat *zMax, const vector<double> &msig2xy0, const vector<double> &msig2xy1,
-                                    const vector<double> &msig2z0, const vector<double> &msig2z1, const vector<double> &osig2xy0,
-                                    const vector<double> &osig2xy1, const vector<double> &osig2z0, const vector<double> &osig2z1,
-                                    const vector<double> &stepT, const double &pdfMin) {
+                                    const vector<double> &Z1, const vector<bool> &isValid, const vector<double> &xGrid,
+                                    const vector<double> &yGrid, const vector<double> &zGrid, gridFloat *zMin,
+                                    gridFloat *zMax, const vector<pointIn3D> &alpha_0, const vector<pointIn3D> &alpha_1,
+                                    const double &pdfMin) {
     // grid specs
-    int nX = xgrid.size();
-    int nY = ygrid.size();
-    int nZ = zgrid.size();
+    int stepT = T[1] - T[0];
+    int nX = xGrid.size();
+    int nY = yGrid.size();
+    int nZ = zGrid.size();
     int nObs = T.size();
     long nVoxels = (long) nX * nY * nZ;
-    double xSz = xgrid[1] - xgrid[0];
-    double ySz = ygrid[1] - ygrid[0];
-    double zSz = zgrid[1] - zgrid[0];
-    double xmin = xgrid[0];
-    double xmax = xgrid[xgrid.size() - 1];
-    double ymin = ygrid[0];
-    double ymax = ygrid[ygrid.size() - 1];
-    double zmin = zgrid[0];
-    double zmax = zgrid[zgrid.size() - 1];
+    double xSz = xGrid[1] - xGrid[0];
+    double ySz = yGrid[1] - yGrid[0];
+    double zSz = zGrid[1] - zGrid[0];
+    double xmin = xGrid[0];
+    double xmax = xGrid[xGrid.size() - 1];
+    double ymin = yGrid[0];
+    double ymax = yGrid[yGrid.size() - 1];
+    double zmin = zGrid[0];
+    double zmax = zGrid[zGrid.size() - 1];
 
     // arrays for MKDE computation
     double *yprob0 = (double *) malloc(nY * sizeof(double)); // To PRECOMPUTE Y
@@ -717,15 +663,13 @@ gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double
     double *zbhattdist = (double *) malloc(nZ * sizeof(double)); // To PRECOMPUTE Z
 
     // Create a vector of GridFloats and initializing GridFloat3D
-    gridFloat3D * mkde = new gridFloat3D(xgrid, ygrid, zgrid);
+    gridFloat3D * mkde = new gridFloat3D(xGrid, yGrid, zGrid);
 
     // set up time variables
     double t0, t1, t, tOld, dt, alpha;
 
     // set up tmp variables
-    double eX0, eY0, eZ0, eX1, eY1, eZ1;
     double W0 = 0.0, W1 = 0.0;
-    double sig2xy0, sig2z0, sig2xy1, sig2z1;
     double distMaxXY0, distMaxXY1, distMaxZ0, distMaxZ1, xyDistSq, zDistSq, tmpZ, xyterm, bhattaFact;
     double haloMinX, haloMaxX, haloMinY, haloMaxY, haloMinZ, haloMaxZ;
     double loReflZ1, hiReflZ1;
@@ -739,166 +683,118 @@ gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double
     for (int j = 0; j < (nObs - 1); j++) {
         cout << "\tProcessing move step " << (j + 1) << " of " << (nObs - 1) << std::endl;
 
-        // report percent complete after each observation
-        t0 = T[j];
-        t1 = T[j + 1];
-        dt = t1 - t0;
-        t = t0;
-        if (isValid[j] == 1) {
-            bool exitLoop = false;
-            bool finalLoop = false;
-            while (!exitLoop) { // iterate over integration time steps
+        // halo
+        distMaxXY0 = univariateNormalDensityThreshold(pdfMin, alpha_0[j].sig2xy);
+        distMaxXY1 = univariateNormalDensityThreshold(pdfMin, alpha_1[j].sig2xy);
+        distMaxZ0 = univariateNormalDensityThreshold(pdfMin, alpha_0[j].sig2z);
+        distMaxZ1 = univariateNormalDensityThreshold(pdfMin, alpha_1[j].sig2z);
 
-                // Calculate fractional distance between t0 and current time
-                alpha = (t - t0) / dt;
+        // x
+        haloMinX = std::min(alpha_0[j].x - distMaxXY0, alpha_1[j].x - distMaxXY1);
+        haloMaxX = std::max(alpha_0[j].x + distMaxXY0, alpha_1[j].x + distMaxXY1);
+        halo1min = coordToIndex(haloMinX, xGrid[0], xSz);
+        halo1max = coordToIndex(haloMaxX, xGrid[0], xSz);
 
-                // Calculate parameters for bilinear interpolation
-                sig2xy0 = dt * alpha * (1.0 - alpha) * msig2xy0[j] +
-                          osig2xy0[j] * (1.0 - alpha) * (1.0 - alpha) +
-                          osig2xy0[j + 1] * alpha * alpha;
-                sig2z0 = dt * alpha * (1.0 - alpha) * msig2z0[j] +
-                         osig2z0[j] * (1.0 - alpha) * (1.0 - alpha) +
-                         osig2z0[j + 1] * alpha * alpha;
-                sig2xy1 = dt * alpha * (1.0 - alpha) * msig2xy1[j] +
-                          osig2xy1[j] * (1.0 - alpha) * (1.0 - alpha) +
-                          osig2xy1[j + 1] * alpha * alpha;
-                sig2z1 = dt * alpha * (1.0 - alpha) * msig2z1[j] +
-                         osig2z1[j] * (1.0 - alpha) * (1.0 - alpha) +
-                         osig2z1[j + 1] * alpha * alpha;
+        // y
+        haloMinY = std::min(alpha_0[j].y - distMaxXY0, alpha_1[j].y - distMaxXY1);
+        haloMaxY = std::max(alpha_0[j].y + distMaxXY0, alpha_1[j].y + distMaxXY1);
+        halo2min = coordToIndex(haloMinY, yGrid[0], ySz);
+        halo2max = coordToIndex(haloMaxY, yGrid[0], ySz);
 
-                // Get (x,y,z) coordinates of kernel origin using linear interpolation
-                vector
-                        eX0 = X0[j] + alpha * (X0[j + 1] - X0[j]);
-                eY0 = Y0[j] + alpha * (Y0[j + 1] - Y0[j]);
-                eZ0 = Z0[j] + alpha * (Z0[j + 1] - Z0[j]);
-                eX1 = X1[j] + alpha * (X1[j + 1] - X1[j]);
-                eY1 = Y1[j] + alpha * (Y1[j + 1] - Y1[j]);
-                eZ1 = Z1[j] + alpha * (Z1[j + 1] - Z1[j]);
+        // z
+        haloMinZ = std::min(alpha_0[j].z - distMaxZ0, alpha_1[j].z - distMaxZ1);
+        haloMaxZ = std::max(alpha_0[j].z + distMaxZ0, alpha_1[j].z + distMaxZ1);
+        halo3min = coordToIndex(haloMinZ, zGrid[0], zSz);
+        halo3max = coordToIndex(haloMaxZ, zGrid[0], zSz);
 
-                // halo
-                distMaxXY0 = univariateNormalDensityThreshold(pdfMin, sig2xy0);
-                distMaxXY1 = univariateNormalDensityThreshold(pdfMin, sig2xy1);
-                distMaxZ0 = univariateNormalDensityThreshold(pdfMin, sig2z0);
-                distMaxZ1 = univariateNormalDensityThreshold(pdfMin, sig2z1);
+        // Precompute voxel density in y dimension
+        for (int i2 = 0; i2 < nY; i2++) {
+            yprob0[i2] = integrateNormal(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_0[j].y, sqrt(alpha_0[j].sig2xy));
+            yprob1[i2] = integrateNormal(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_1[j].y, sqrt(alpha_1[j].sig2xy));
+            ybhattdist[i2] = integrateKernelBC(yGrid[i2] - 0.5 * ySz, yGrid[i2] + 0.5 * ySz, alpha_0[j].y, sqrt(alpha_0[j].sig2xy),
+                                               alpha_1[j].y, sqrt(alpha_1[j].sig2xy), pdfMin);
+        }
 
-                // x
-                haloMinX = std::min(eX0 - distMaxXY0, eX1 - distMaxXY1);
-                haloMaxX = std::max(eX0 + distMaxXY0, eX1 + distMaxXY1);
-                halo1min = coordToIndex(haloMinX, xgrid[0], xSz);
-                halo1max = coordToIndex(haloMaxX, xgrid[0], xSz);
+        // Precompute voxel density in z dimension
+        for (int i3 = 0; i3 < nZ; i3++) {
+            zprob0[i3] = integrateNormal(zGrid[i3] - 0.5 * zSz, zGrid[i3] + 0.5 * zSz, alpha_0[j].z, sqrt(alpha_0[j].sig2z));
+            zprob1[i3] = integrateNormal(zGrid[i3] - 0.5 * zSz, zGrid[i3] + 0.5 * zSz, alpha_1[j].z, sqrt(alpha_1[j].sig2z));
+            zbhattdist[i3] = integrateKernelBC(zGrid[i3] - 0.5 * zSz, zGrid[i3] + 0.5 * zSz, alpha_0[j].z, sqrt(alpha_0[j].sig2z),
+                                               alpha_1[j].z, sqrt(alpha_1[j].sig2z), pdfMin);
+        }
+        bhattaFact = (RSQRT2PI * RSQRT2PI * RSQRT2PI) /
+                     (sqrt(alpha_0[j].sig2xy) * sqrt(alpha_1[j].sig2xy) * sqrt(sqrt(alpha_0[j].sig2z) * sqrt(alpha_1[j].sig2z)));
 
-                // y
-                haloMinY = std::min(eY0 - distMaxXY0, eY1 - distMaxXY1);
-                haloMaxY = std::max(eY0 + distMaxXY0, eY1 + distMaxXY1);
-                halo2min = coordToIndex(haloMinY, ygrid[0], ySz);
-                halo2max = coordToIndex(haloMaxY, ygrid[0], ySz);
+        for (int i1 = std::max(0, halo1min); i1 < std::min(nX, halo1max); i1++) { // x-dimension
+            double voxx = xGrid[i1]; // voxel x
+            double xprob0 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_0[j].x, sqrt(alpha_0[j].sig2xy));
+            double xprob1 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_1[j].x, sqrt(alpha_1[j].sig2xy));
+            double xbhattdist = integrateKernelBC(voxx - 0.5 * xSz, voxx + 0.5 * xSz, alpha_0[j].x, sqrt(alpha_0[j].sig2xy),
+                                                  alpha_1[j].x, sqrt(alpha_1[j].sig2xy), pdfMin);
+            for (int i2 = std::max(0, halo2min); i2 < std::min(nY, halo2max); i2++) { // y-dimension
+                double voxy = yGrid[i2]; // voxel y
 
-                // z
-                haloMinZ = std::min(eZ0 - distMaxZ0, eZ1 - distMaxZ1);
-                haloMaxZ = std::max(eZ0 + distMaxZ0, eZ1 + distMaxZ1);
-                halo3min = coordToIndex(haloMinZ, zgrid[0], zSz);
-                halo3max = coordToIndex(haloMaxZ, zgrid[0], zSz);
+                // get the range of indexes and coordinates based on the physical boundaries
+                int i3lo = std::max(0, getLowerCellIndex(/*zMin(i1, i2)*/0, zGrid[0], zSz));
+                int i3hi = std::min(nZ, getUpperCellIndex(/*zMax(i1, i2)*/5000, zGrid[0], zSz) +
+                                        1); // add 1 because less than
+                double loZ = indexToCellCenterCoord(i3lo, zGrid[0], zSz) - 0.5 * zSz;
+                double hiZ = indexToCellCenterCoord(i3hi - 1, zGrid[0], zSz) + 0.5 * zSz;
 
-                // Precompute voxel density in y dimension
-                for (int i2 = 0; i2 < nY; i2++) {
-                    yprob0[i2] = integrateNormal(ygrid[i2] - 0.5 * ySz, ygrid[i2] + 0.5 * ySz, eY0, sqrt(sig2xy0));
-                    yprob1[i2] = integrateNormal(ygrid[i2] - 0.5 * ySz, ygrid[i2] + 0.5 * ySz, eY1, sqrt(sig2xy1));
-                    ybhattdist[i2] = integrateKernelBC(ygrid[i2] - 0.5 * ySz, ygrid[i2] + 0.5 * ySz, eY0, sqrt(sig2xy0),
-                                                       eY1, sqrt(sig2xy1), pdfMin[0]);
-                }
+                // Reflect E[Z] about the lower and upper boundaries
+                double loReflZ0 = 2.0 * loZ - alpha_0[j].z;
+                double hiReflZ0 = 2.0 * hiZ - alpha_0[j].z;
+                double loReflZ1 = 2.0 * loZ - alpha_1[j].z;
+                double hiReflZ1 = 2.0 * hiZ - alpha_1[j].z;
 
-                // Precompute voxel density in z dimension
-                for (int i3 = 0; i3 < nZ; i3++) {
-                    zprob0[i3] = integrateNormal(zgrid[i3] - 0.5 * zSz, zgrid[i3] + 0.5 * zSz, eZ0, sqrt(sig2z0));
-                    zprob1[i3] = integrateNormal(zgrid[i3] - 0.5 * zSz, zgrid[i3] + 0.5 * zSz, eZ1, sqrt(sig2z1));
-                    zbhattdist[i3] = integrateKernelBC(zgrid[i3] - 0.5 * zSz, zgrid[i3] + 0.5 * zSz, eZ0, sqrt(sig2z0),
-                                                       eZ1, sqrt(sig2z1), pdfMin[0]);
-                }
-                bhattaFact = (RSQRT2PI * RSQRT2PI * RSQRT2PI) /
-                             (sqrt(sig2xy0) * sqrt(sig2xy1) * sqrt(sqrt(sig2z0) * sqrt(sig2z1)));
-
-                for (int i1 = std::max(0, halo1min); i1 < std::min(nX, halo1max); i1++) { // x-dimension
-                    double voxx = xgrid[i1]; // voxel x
-                    double xprob0 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, eX0, sqrt(sig2xy0));
-                    double xprob1 = integrateNormal(voxx - 0.5 * xSz, voxx + 0.5 * xSz, eX1, sqrt(sig2xy1));
-                    double xbhattdist = integrateKernelBC(voxx - 0.5 * xSz, voxx + 0.5 * xSz, eX0, sqrt(sig2xy0), eX1,
-                                                          sqrt(sig2xy1), pdfMin[0]);
-                    for (int i2 = std::max(0, halo2min); i2 < std::min(nY, halo2max); i2++) { // y-dimension
-                        double voxy = ygrid[i2]; // voxel y
-
-                        // get the range of indexes and coordinates based on the physical boundaries
-                        int i3lo = std::max(0, getLowerCellIndex(zMin(i1, i2), zgrid[0], zSz));
-                        int i3hi = std::min(nZ, getUpperCellIndex(zMax(i1, i2), zgrid[0], zSz) +
-                                                1); // add 1 because less than
-                        double loZ = indexToCellCenterCoord(i3lo, zgrid[0], zSz) - 0.5 * zSz;
-                        double hiZ = indexToCellCenterCoord(i3hi - 1, zgrid[0], zSz) + 0.5 * zSz;
-
-                        // Reflect E[Z] about the lower and upper boundaries
-                        double loReflZ0 = 2.0 * loZ - eZ0;
-                        double hiReflZ0 = 2.0 * hiZ - eZ0;
-                        double loReflZ1 = 2.0 * loZ - eZ1;
-                        double hiReflZ1 = 2.0 * hiZ - eZ1;
-
-                        for (int i3 = std::max(i3lo, halo3min); i3 < std::min(i3hi, halo3max); i3++) { // z-dimension
-                            // set up for reflection: HOW RELEVANT IS THE REFLECTION METHOD FOR INTERACTION?
-                            // only compute if the expected location is within distance of boundary
-                            double voxz = zgrid[i3];
-                            double loDZ0 = 0.0, hiDZ0 = 0.0, loDZ1 = 0.0, hiDZ1 = 0.0, loBD = 0.0, hiBD = 0.0;
-                            if ((std::fabs(eZ0 - loZ) <= distMaxZ0) || (std::fabs(eZ1 - loZ) <= distMaxZ1)) {
-                                loDZ0 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, loReflZ0, sqrt(sig2z0));
-                                loDZ1 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, loReflZ1, sqrt(sig2z1));
-                                loBD = integrateKernelBC(voxz - 0.5 * zSz, voxz + 0.5 * zSz, loReflZ0, sqrt(sig2z0),
-                                                         loReflZ1, sqrt(sig2z1), pdfMin[0]);
-                            }
-                            if ((std::fabs(hiZ - eZ0) <= distMaxZ0) || (std::fabs(hiZ - eZ1) <= distMaxZ1)) {
-                                hiDZ0 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, hiReflZ0, sqrt(sig2z0));
-                                hiDZ1 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, hiReflZ1, sqrt(sig2z1));
-                                hiBD = integrateKernelBC(voxz - 0.5 * zSz, voxz + 0.5 * zSz, hiReflZ0, sqrt(sig2z0),
-                                                         hiReflZ1, sqrt(sig2z1), pdfMin[0]);
-                            }
-
-                            // Calculate contribution of kernel to voxel
-                            double pXYZ0 = xprob0 * yprob0[i2] * (zprob0[i3] + loDZ0 + hiDZ0);
-                            double pXYZ1 = xprob1 * yprob1[i2] * (zprob1[i3] + loDZ1 + hiDZ1);
-                            double pXYZ = xbhattdist * ybhattdist[i2] * (zbhattdist[i3] + loBD + hiBD) * bhattaFact;
-
-                            // update density (trapezoid rule)
-                            double tmpDens, tmpDens0, tmpDens1;
-                            if (doubleEquals(t, t0)) { // first term
-                                tmpDens0 = stepT[0] * pXYZ0 / 2.0;
-                                tmpDens1 = stepT[0] * pXYZ1 / 2.0;
-                                tmpDens = stepT[0] * pXYZ / 2.0;
-                            } else if (doubleEquals(t, t1)) { // last term
-                                tmpDens0 = (t - tOld) * pXYZ0 / 2.0;
-                                tmpDens1 = (t - tOld) * pXYZ1 / 2.0;
-                                tmpDens = (t - tOld) * pXYZ / 2.0;
-                            } else { // intermediate terms
-                                tmpDens0 = stepT[0] * pXYZ0;
-                                tmpDens1 = stepT[0] * pXYZ1;
-                                tmpDens = stepT[0] * pXYZ;
-                            }
-                            // Add contribution to voxel (removed Kahan summation for now)
-                            long kk = getLinearIndex(i1, i2, i3, nX, nY);
-                            mkde[kk] += tmpDens; // mkde[kk] + tmpDens;
-                            W0 += tmpDens0;
-                            W1 += tmpDens1;
-                        }
+                for (int i3 = std::max(i3lo, halo3min); i3 < std::min(i3hi, halo3max); i3++) { // z-dimension
+                    // set up for reflection: HOW RELEVANT IS THE REFLECTION METHOD FOR INTERACTION?
+                    // only compute if the expected location is within distance of boundary
+                    double voxz = zGrid[i3];
+                    double loDZ0 = 0.0, hiDZ0 = 0.0, loDZ1 = 0.0, hiDZ1 = 0.0, loBD = 0.0, hiBD = 0.0;
+                    if ((std::fabs(alpha_0[j].z - loZ) <= distMaxZ0) || (std::fabs(alpha_1[j].z - loZ) <= distMaxZ1)) {
+                        loDZ0 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, loReflZ0, sqrt(alpha_0[j].sig2z));
+                        loDZ1 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, loReflZ1, sqrt(alpha_1[j].sig2z));
+                        loBD = integrateKernelBC(voxz - 0.5 * zSz, voxz + 0.5 * zSz, loReflZ0, sqrt(alpha_0[j].sig2z),
+                                                 loReflZ1, sqrt(alpha_1[j].sig2z), pdfMin);
                     }
-                }
-                // update the eval time (t) and stopping conditions
-                if (finalLoop) {
-                    exitLoop = true;
-                } else {
-                    tOld = t;
-                    t += stepT[0];
-                    if (t >= t1) {
-                        t = t1;
-                        finalLoop = true;
+                    if ((std::fabs(hiZ - alpha_0[j].z) <= distMaxZ0) || (std::fabs(hiZ - alpha_1[j].z) <= distMaxZ1)) {
+                        hiDZ0 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, hiReflZ0, sqrt(alpha_0[j].sig2z));
+                        hiDZ1 = integrateNormal(voxz - 0.5 * zSz, voxz + 0.5 * zSz, hiReflZ1, sqrt(alpha_1[j].sig2z));
+                        hiBD = integrateKernelBC(voxz - 0.5 * zSz, voxz + 0.5 * zSz, hiReflZ0, sqrt(alpha_0[j].sig2z),
+                                                 hiReflZ1, sqrt(alpha_1[j].sig2z), pdfMin);
                     }
+
+                    // Calculate contribution of kernel to voxel
+                    double pXYZ0 = xprob0 * yprob0[i2] * (zprob0[i3] + loDZ0 + hiDZ0);
+                    double pXYZ1 = xprob1 * yprob1[i2] * (zprob1[i3] + loDZ1 + hiDZ1);
+                    double pXYZ = xbhattdist * ybhattdist[i2] * (zbhattdist[i3] + loBD + hiBD) * bhattaFact;
+
+                    // update density (trapezoid rule)
+                    double tmpDens, tmpDens0, tmpDens1;
+                    if (doubleEquals(t, t0)) { // first term
+                        tmpDens0 = stepT * pXYZ0 / 2.0;
+                        tmpDens1 = stepT * pXYZ1 / 2.0;
+                        tmpDens = stepT * pXYZ / 2.0;
+                    } else if (doubleEquals(t, t1)) { // last term
+                        tmpDens0 = (t - tOld) * pXYZ0 / 2.0;
+                        tmpDens1 = (t - tOld) * pXYZ1 / 2.0;
+                        tmpDens = (t - tOld) * pXYZ / 2.0;
+                    } else { // intermediate terms
+                        tmpDens0 = stepT * pXYZ0;
+                        tmpDens1 = stepT * pXYZ1;
+                        tmpDens = stepT * pXYZ;
+                    }
+                    // Add contribution to voxel (removed Kahan summation for now)
+                    double eX = indexToCellCenterCoord(i1, xmin, xSz);
+                    double eY = indexToCellCenterCoord(i2, ymin, ySz);
+                    double eZ = indexToCellCenterCoord(i3, zmin, zSz);
+                    mkde->addValueToGridCell(eX, eY, eZ, tmpDens); // mkde[kk] + tmpDens;
+                    W0 += tmpDens0;
+                    W1 += tmpDens1;
                 }
             }
         }
-        // Rcpp::Rcout << "\t\tW0 = " << W0 << ", W1 = " << W1 << std::endl;
     }
 
     // divide by totalT
@@ -926,7 +822,7 @@ gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double
     // RETURN DENSITY HERE
     return mkde;
 }
-*/
+
 
 /*****************************************************************************
  * Helper functions to translate between cell or voxel indexes and coordinates
