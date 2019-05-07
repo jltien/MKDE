@@ -17,11 +17,10 @@
 #include <cmath>
 #include <math.h>
 #include <random>
+#include "Raster/ioFunctions.h"
 #include "Raster/raster.h"
 #include "Raster/file_io.h"
-#include "AnimalData.cpp"
 #include "Raster/pairwiseFunctions.h"
-#include "Raster/ioFunctions.cpp"
 
 using namespace std;
 
@@ -58,18 +57,9 @@ gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double
                                     gridFloat *zMax, const vector<pointIn3D> &alpha_0, const vector<pointIn3D> &alpha_1,
                                     const double &pdfMin);
 
-/*
-gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double> &X0, const vector<double> &Y0,
-                                    const vector<double> &Z0, const vector<double> &X1, const vector<double> &Y1,
-                                    const vector<double> &Z1, const vector<bool> &isValid, const vector<double> &xgrid,
-                                    const vector<double> &ygrid, const vector<double> &zgrid, gridFloat *zMin,
-                                    gridFloat *zMax, const vector<double> &msig2xy0, const vector<double> &msig2xy1,
-                                    const vector<double> &msig2z0, const vector<double> &msig2z1, const vector<double> &osig2xy0,
-                                    const vector<double> &osig2xy1, const vector<double> &osig2z0, const vector<double> &osig2z1,
-                                    const vector<double> &stepT, const double &pdfMin);
-*/
 
 
+gridFloat3D * to3dGrid(gridFloat * grid2d, vector<double> xgrid, vector<double> ygrid);
 int coordToIndex(double x, double minGridCoord, double cellSz);
 double univariateNormalDensityThreshold(double p, double sigma2);
 long getLinearIndex(long row, long col, long level, long nR, long nC);
@@ -80,21 +70,13 @@ double integrateNormal(double x0, double x1, double mu, double sigma);
 double pnorm(double x, double mu, double sigma);
 bool isMachineBigEndian();
 inline bool doubleEquals(double a, double b);
-void withinBounds(AnimalData * animal, long minutes);
-void updateTime(AnimalData * animal);
 double kernelBC(double x, double mu1, double sigma1sq, double mu2, double sigma2sq);
 double trapzdKernelBC(double x0, double x1, double mu1, double sigma1sq, double mu2, double sigma2sq, int n, double old_s);
 double integrateKernelBC(double x0, double x1, double mu1, double sigma1, double mu2, double sigma2, double pThresh);
+void printDensities(gridFloat3D * mkde, string filename);
 
 inline bool doubleEquals(double a, double b) {
     return fabs(a - b) < MY_EPS;
 }
 
-
-// IO Functions
-unordered_map<string, AnimalData *> *fileRead(const char *in_filename);
-void writeMKDE3DtoVTK(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
-                      gridFloat3D * rst3d, string fname, string description);
-void writeMKDE3DtoGRASS(const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
-                        gridFloat3D * rst3d, string fname, string nv);
 #endif //MKDE_H

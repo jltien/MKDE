@@ -46,6 +46,10 @@ gridFloat::gridFloat() {
 * Constructor to make a raster of no data values                               *
 ------------------------------------------------------------------------------*/
 gridFloat::gridFloat(int rID, long nr, long nc, double xll, double yll, double cellsz) {
+    xmin = xll;
+    ymin = yll;
+    xsize = cellsz;
+    ysize = cellsz;
 
     if (rID >= 0) {
             rasterID = rID;
@@ -99,6 +103,9 @@ gridFloat::gridFloat(int rID, long nr, long nc, double xll, double yll, double c
     xur_val = xll + cell_size*long(num_cols);
     yur_val = yll + cell_size*long(num_rows);
     grid_bbox.reset(xll, yll, xur_val, yur_val);
+
+    xmax = xur_val;
+    ymax = yur_val;
 }
 
 /*------------------------------------------------------------------------------
@@ -809,7 +816,7 @@ void gridFloat::display() {
     std::cout << std::endl;
 }
 
-void gridFloat::printESRIascii(char * filen) {
+void gridFloat::printESRIascii(std::string filen) {
     // 1.  open file
     std::ofstream fout;
     fout.open(filen);
@@ -911,7 +918,6 @@ void gridFloat::printESRIbinary(char * filen) {
     datout.close();
 }
 
-
 /*------------------------------------------------------------------------------
 * Constructor to make a 3d raster of no data values                            *
 ------------------------------------------------------------------------------*/
@@ -931,10 +937,28 @@ gridFloat3D::gridFloat3D(const std::vector<double> &xgrid, const std::vector<dou
 
     int array_num = 0;
     for (double i = 0; i < znum; i++) {
-        gridFloat *rst = new gridFloat(array_num++, xnum, ynum, xmin, ymin, xsize);
+        gridFloat *rst = new gridFloat(array_num++, ynum, xnum, xmin, ymin, xsize);
         rst->setAllCellsToZero(true);
         this->xy_grids.push_back(rst);
     }
+}
+
+gridFloat3D::gridFloat3D(gridFloat * rst, std::vector<double> &xgrid, std::vector<double> &ygrid) {
+    xmin = xgrid[0];
+    ymin = ygrid[0];
+    xmax = xgrid[xgrid.size() - 1];
+    ymax = ygrid[ygrid.size() - 1];
+    xsize = xgrid[1] - xgrid[0];
+    ysize = ygrid[1] - ygrid[0];
+    xnum = xgrid.size();
+    ynum = ygrid.size();
+    zmin = 0; 
+    zmax = 0;
+    zsize = 1;
+    znum = 1;
+
+    this->xy_grids.push_back(rst);
+    //this->xy_grids.push_back(rst);
 }
 
 gridFloat3D::~gridFloat3D() {
@@ -943,18 +967,25 @@ gridFloat3D::~gridFloat3D() {
     }
 }
 
-float gridFloat3D::getGridValue(double eX, double eY, double eZ) {
+float gridFloat3D::getGridValue(double eX, double eY, double zcoord) {
+    /*
     if(getGridZ(eZ) < zmin || getGridZ(eZ) > zmax) {
+        std::cout << "uh hello?" << std::endl;
         return no_dat;
     }
     else {
         return xy_grids[getGridZ(eZ)]->getGridValue(eX, eY);
+    } */
+    if ((zcoord >= zmin)&&(zcoord <= zmax)) {
+        return xy_grids[getGridZ(zcoord)]->getGridValue(eX, eY);
     }
+    return no_dat;
 }
 
-void gridFloat3D::setGridValue(double xcoord, double ycoord, double zcoord, float val) {
+void gridFloat3D::setGridValue(double eX, double eY, double zcoord, float val) {
     if ((zcoord >= zmin)&&(zcoord <= zmax)) {
-        xy_grids[getGridZ(zcoord)]->setGridValue(xcoord, ycoord, val);
+        if (xy_grids[getGridZ(zcoord)]->getGridValue(eX, eY) != no_dat)
+        xy_grids[getGridZ(zcoord)]->setGridValue(eX, eY, val);
     }
     // else, do nothing
 }

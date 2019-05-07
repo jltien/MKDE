@@ -74,6 +74,42 @@ std::vector<pointIn3D> interpolateCoordinateOnTimeGrid(const std::vector<time_t>
 }
 
 
+std::vector<pointIn3D> interpolateCoordinateOnTimeGrid2d(const std::vector<time_t> & grid_times, const std::vector<double> & location_indexes,
+                                                       const std::vector<time_t> & location_times, const std::vector<pointIn3D> & location_xyz,
+                                                       const std::vector<double> moveVarXY, const std::vector<double> obsVarXY) {
+    double NA_INDEX = NAN;
+    int m = grid_times.size();
+    int n = location_times.size();
+    double alpha_j, sig2xy, dt;
+    std::vector<double> res_x(m, NA_INDEX);
+    std::vector<double> res_y(m, NA_INDEX);
+    std::vector<pointIn3D> res_xyz;
+
+    for (int i = 0; i < grid_times.size(); i++) {
+        double j = location_indexes[i];
+        if (j != NA_INDEX && j <= (n-2)) {
+
+            if (location_times[j + 1] - location_times[j] != 0) {
+                alpha_j = (grid_times[i] - location_times[j]) * 1.0 / (location_times[j + 1] - location_times[j]);
+            }
+            else {
+                alpha_j = 0;
+            }
+            res_x[i] = location_xyz[j].x + alpha_j * (location_xyz[j + 1].x - location_xyz[j].x);
+            res_y[i] = location_xyz[j].y + alpha_j * (location_xyz[j + 1].y - location_xyz[j].y);
+            dt = grid_times[j + 1] - grid_times[j];
+            sig2xy = dt * alpha_j * (1.0 - alpha_j) * moveVarXY[j] + obsVarXY[j] * (1.0 - alpha_j)
+                                                * (1.0 - alpha_j) + obsVarXY[j + 1] * alpha_j * alpha_j;
+        }
+
+        res_xyz.push_back(pointIn3D(res_x[i], res_y[i], 1, grid_times[i], alpha_j, sig2xy, 1));
+    } 
+
+
+    // return alpha_j with each tuple
+    return res_xyz;
+}
+
 std::vector<double> euclideanDistance(const std::vector<pointIn3D> & xyz0, const std::vector<pointIn3D> & xyz1, bool use_z) {
 
     use_z = false;

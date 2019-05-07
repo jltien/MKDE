@@ -1,13 +1,51 @@
+#include "ioFunctions.h"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <cmath>
+#include <math.h>
+#include <random>
 using namespace std;
+const char separator = ',';
+
 /*****************************************************************************
- * Takes an animal data file with an id(string), x(double), y(double),
- * z(double), minutes(double), ObsVarXY(double), ObsVarZ(double), MoveVarXY(double),
+ * delegates to the correct fileRead.
+ *****************************************************************************/
+unordered_map<string, AnimalData *> * fileRead(string in_filename) {
+    int rows = 0;
+    ifstream infile(in_filename);
+    string line;
+    getline(infile, line);
+    istringstream ss(line);
+    string next;
+    while (getline(ss, next, separator)) {
+    	rows++;
+    }
+
+    if (rows == 9) {
+        return fileRead3d(in_filename);
+    }
+    else if (rows == 6) {
+        return fileRead2d(in_filename);
+    }
+    else {
+        cout << "Wrong file format" << endl;
+        return 0;
+    }
+}
+
+/*****************************************************************************
+ * Takes an animal data file with an id(string), timestamp, x(double), y(double),
+ * z(double), ObsVarXY(double), ObsVarZ(double), MoveVarXY(double),
  * MoveVarZ(double), and parses the data into a vector of vector of the data. The outer
  * vector's elements are unique animals and the inner vector has a single
  * animal's data entries. Returns true if successful, false if unsuccessful.
- * MUST HAVE 10 ARGUMENTS IN THAT ORDER!!!
+ * MUST HAVE 9 ARGUMENTS IN THAT ORDER!!!
  *****************************************************************************/
-unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
+unordered_map<string, AnimalData *> * fileRead3d(string in_filename) {
     unordered_map<string, AnimalData *> *animals = new unordered_map<string, AnimalData *>();
     ifstream infile(in_filename);   // Initialize the file stream
     bool have_header = true;
@@ -32,9 +70,9 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         while (ss) {
             string next;
 
-            if (!getline(ss, next, '\t')) break;
+            if (!getline(ss, next, separator)) break;
             record.push_back(next);
-            if (record.size() != 10) {
+            if (record.size() != 9) {
                 continue;
             }
             string id = record[0];
@@ -46,13 +84,11 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             double x = stod(record[2]);
             double y = stod(record[3]);
             double z = stod(record[4]);
-            double t = stod(record[5]);
-            double obs_var_xy = stod(record[6]);
-            double obs_var_z = stod(record[7]);
-            double mov_var_xy = stod(record[8]);
-            double mov_var_z = stod(record[9]);
-
-            unordered_map<string, AnimalData *>::const_iterator exists = animals->find(id);
+            double obs_var_xy = stod(record[5]);
+            double obs_var_z = stod(record[6]);
+            double mov_var_xy = stod(record[7]);
+            double mov_var_z = stod(record[8]);
+            std::unordered_map<std::string, AnimalData *>::const_iterator exists = animals->find(id);
 
             // A new animal has been encountered
             if (exists == animals->end()) {
@@ -65,8 +101,6 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             new_animal->x.push_back(x);
             new_animal->y.push_back(y);
             new_animal->z.push_back(z);
-            new_animal->xyz.push_back(pointIn3D(x, y, z, t));
-            new_animal->t.push_back(t);
             new_animal->tm.push_back(tm);
             new_animal->epochSeconds.push_back(epoch);
             new_animal->obsVarXY.push_back(obs_var_xy);
@@ -84,6 +118,15 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
 
     infile.close();
 
+    // find the earliest first observation time
+    time_t first_obs = numeric_limits<time_t>::max();
+    for (auto it = animals->begin(); it != animals->end(); ++it) {
+        if (it->second->epochSeconds[0] < first_obs) {
+            first_obs = it->second->epochSeconds[0];
+        }
+    }
+
+    // set fields for animals
     for (auto it = animals->begin(); it != animals->end(); ++it) {
 
         // Populate the use vector for all the animals, with all trues except the last element
@@ -91,6 +134,11 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
             it->second->use.push_back(true);
         }
         it->second->use.push_back(false);
+
+        // calculate seconds/minutes elapsed since first observation, fill T and use
+        updateTime(it->second, 9, first_obs);
+        withinBounds(it->second, 43200); // use if within 4320 minutes
+
 
         // Find the min and max for x and y
         double xmin = numeric_limits<double>::max();
@@ -137,11 +185,183 @@ unordered_map<string, AnimalData *> *fileRead(const char *in_filename) {
         it->second->tmin = tmin;
         it->second->tmax = tmax;
     }
+    return animals;
+}
+
+/*****************************************************************************
+ * Takes an animal data file with an id(string), timestamp, x(double), y(double),
+ * ObsVarXY(double), MoveVarXY(double), and parses the data into a vector of 
+ * vector of the data. The outer vector's elements are unique animals and the 
+ * inner vector has a single animal's data entries. Returns true if successful,
+ * false if unsuccessful. MUST HAVE 6 ARGUMENTS IN THAT ORDER!!!
+ *****************************************************************************/
+
+unordered_map<string, AnimalData *> * fileRead2d(string in_filename) {
+
+    unordered_map<string, AnimalData *> *animals = new unordered_map<string, AnimalData *>();
+    ifstream infile(in_filename);   // Initialize the file stream
+    bool have_header = true;
+    AnimalData *new_animal;
+    static int num_grid = 0;
+
+    // Keep reading lines until the end of file is reached
+    while (infile) {
+        string s;
+
+        if (!getline(infile, s)) break;
+        // Skip the file header
+        if (have_header) {
+            have_header = false;
+            continue;
+        }
+
+        istringstream ss(s);
+        vector<string> record;
+
+        // Parses each individual line of data for each data entry
+        while (ss) {
+            string next;
+
+            if (!getline(ss, next, separator)) break;
+            record.push_back(next);
+            if (record.size() != 6) {
+                continue;
+            }
+            string id = record[0];
+            string date_string = record[1];
+            struct tm tm;
+            const char *date_char = date_string.c_str();
+            strptime(date_char, "%m/%d/%Y %H:%M", &tm);
+            time_t epoch = mktime(&tm);
+            double x = stod(record[2]);
+            double y = stod(record[3]);
+            double obs_var_xy = stod(record[4]);
+            double mov_var_xy = stod(record[5]);
+            std::unordered_map<std::string, AnimalData *>::const_iterator exists = animals->find(id);
+
+            // A new animal has been encountered
+            if (exists == animals->end()) {
+                new_animal = new AnimalData(id);
+                animals->insert({id, new_animal});
+                exists = animals->find(id);
+            }
+
+            new_animal = exists->second;
+            new_animal->x.push_back(x);
+            new_animal->y.push_back(y);
+            new_animal->tm.push_back(tm);
+            new_animal->epochSeconds.push_back(epoch);
+            new_animal->obsVarXY.push_back(obs_var_xy);
+            new_animal->moveVarXY.push_back(mov_var_xy);
+        }
+    }
+
+    // Failed to read the file
+    if (!infile.eof()) {
+        cerr << "FAILED TO READ " << in_filename << endl;
+        return nullptr;
+    }
+
+    infile.close();
+
+    // find the earliest first observation time
+    time_t first_obs = numeric_limits<time_t>::max();
+    for (auto it = animals->begin(); it != animals->end(); ++it) {
+        if (it->second->epochSeconds[0] < first_obs) {
+            first_obs = it->second->epochSeconds[0];
+        }
+    }
+
+    for (auto it = animals->begin(); it != animals->end(); ++it) {
+
+        // Populate the use vector for all the animals, with all trues except the last element
+        for (int i = 0; i < it->second->x.size() - 1; ++i) {
+            it->second->use.push_back(true);
+        }
+        it->second->use.push_back(false);
+
+        // calculate seconds/minutes elapsed since first observation, fill T and use
+        updateTime(it->second, 6, first_obs);
+
+        withinBounds(it->second, 4320); // use if within 4320 minutes
+
+
+        // Find the min and max for x and y
+        double xmin = numeric_limits<double>::max();
+        double ymin = numeric_limits<double>::max();
+        time_t tmin = numeric_limits<time_t>::max();
+        double xmax = 0;
+        double ymax = 0;
+        time_t tmax = 0;
+
+        for (int i = 0; i < it->second->x.size(); ++i) {
+            if (it->second->x[i] < xmin) {
+                xmin = it->second->x[i];
+            }
+            if (it->second->x[i] > xmax) {
+                xmax = it->second->x[i];
+            }
+            if (it->second->y[i] < ymin) {
+                ymin = it->second->y[i];
+            }
+            if (it->second->y[i] > ymax) {
+                ymax = it->second->y[i];
+            }
+            if (it->second->epochSeconds[i] < tmin) {
+                tmin = it->second->epochSeconds[i];
+            }
+            if (it->second->epochSeconds[i] > tmax) {
+                tmax = it->second->epochSeconds[i];
+            }
+        }
+        it->second->xmin = xmin;
+        it->second->xmax = xmax;
+        it->second->ymin = ymin;
+        it->second->ymax = ymax;
+        it->second->tmin = tmin;
+        it->second->tmax = tmax;
+        it->second->zmin = -1;
+    }
 
     return animals;
 }
 
+/*****************************************************************************
+ * Helper functions to check whether the time is within the bounds we're
+ * interested in
+ *****************************************************************************/
+void withinBounds(AnimalData *animal, long minutes) {
+    int bound = minutes * 60;
+    for (int i = 1; i < animal->t.size(); i++) {
+        if (animal->epochSeconds[i] - animal->epochSeconds[i - 1] >= bound) {
+            animal->use[i] = false;
+            animal->use[i - 1] = false;
+        }
+    }
+}
 
+/*****************************************************************************
+ * Helper functions to adjust time relative to the first observation time.
+ *****************************************************************************/
+void updateTime(AnimalData *animal, int num_args, time_t first_obs) {
+    for (int i = 0; i < animal->epochSeconds.size(); i++) {
+        animal->epochSeconds[i] = difftime(animal->epochSeconds[i], first_obs);
+        animal->t.push_back(animal->epochSeconds[i]/60.0);
+    }
+	
+    for (int i = 0; i < animal->x.size(); i++) {
+
+        // 3d version
+    	if (num_args == 9) {
+        	animal->xyz.push_back(pointIn3D(animal->x[i], animal->y[i], animal->z[i], animal->t[i]));
+        }
+
+        // 2d version
+        if (num_args == 6) {
+     //    	animal->xyz.push_back(pointIn3D(animal->x[i], animal->y[i], 0, animal->t[i]));
+        }
+    }
+}
 
 /*****************************************************************************
  * Writes MKDE3D to a VTK file format with the name of the file being fname
@@ -361,4 +581,20 @@ void writeMKDE3DtoXDMF(const vector<double> &xgrid, const vector<double> &ygrid,
 
 // done...
     return;
+}
+
+
+
+void printPoints(gridFloat * grid, std::string filename) {
+	std::ofstream file;
+    file.open (filename);
+
+	for (double eY = grid->ymin; eY <= grid->ymax; eY = eY + grid->ysize) {
+		for (double eX = grid->xmin; eX <= grid->xmax; eX = eX + grid->xsize) {
+			if (grid->getGridValue(eX, eY) > 0) {
+				file << eX << " " << eY << " " << grid->getGridValue(eX, eY) << std::endl;
+			}
+		}
+	}
+	file.close();
 }

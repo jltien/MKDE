@@ -1,8 +1,26 @@
 #include "mkde.h"
+#include "Raster/ioFunctions.h"
+#define padding 1000
 
 int main() {
     unordered_map<string, AnimalData *> *animals;
-    animals = fileRead("/Users/joycetien/Desktop/SDSC/MKDE/Data/CondorTestData2.txt");
+    cout << "File path to animal data: ";
+ 	string filepath;
+  //  filepath = "/Users/joycetien/Desktop/tables2d/Condors.csv";
+    cin >> filepath;
+    animals = fileRead(filepath);
+
+    // fileRead failed
+    if (animals == nullptr) {
+    	cout << "Make sure the path is absolute!" << endl;
+    	return 0;
+    }
+
+    cout << "\n(1) 2-Dimension" << "\n(2) 3-Dimension"
+    			<< "\n(3) 2-Dimension Interaction" 
+    			<< "\n(4) 3-Dimension Interaction" << endl << "\nType of interaction: ";
+    short interaction;
+    cin >> interaction;
 
     vector<double> grid_x;
     vector<double> grid_y;
@@ -53,16 +71,16 @@ int main() {
     }
 
     // set the x, y, z, t grids
-    for (double i = xmin - 2000; i < xmax + 2000; i = i + 250) {
+    for (double i = xmin - padding; i < xmax + padding; i = i + 500) {
         grid_x.push_back(i);
     }
-    for (double i = ymin - 2000; i < ymax + 2000; i = i + 250) {
+    for (double i = ymin - padding; i < ymax + padding; i = i + 500) {
         grid_y.push_back(i);
     }
-    for (double i = 0; i < zmax + 2000; i = i + 500) {
+    for (double i = zmin - padding; i < zmax + padding; i = i + 500) {
         grid_z.push_back(i);
     }
-    for (time_t i = tmin; i < tmax; i = i + 2000) {
+    for (time_t i = tmin - padding; i < tmax + padding; i = i + 2000) {
         grid_t.push_back(i);
     }
 
@@ -73,66 +91,94 @@ int main() {
     }
 
     // set up zmin and zmax
-    gridFloat *high = new gridFloat(1, grid_x.size(), grid_y.size(), xmin, ymin, grid_x[1] - grid_x[0]);
+    gridFloat *high = new gridFloat(1, grid_y.size(), grid_x.size(), xmin, ymin, grid_x[1] - grid_x[0]);
     high->setAllCellsTo(zmax);
-    gridFloat *low = new gridFloat(0, grid_x.size(), grid_y.size(), xmin, ymin, grid_x[1] - grid_x[0]);
+    gridFloat *low = new gridFloat(0, grid_y.size(), grid_x.size(), xmin, ymin, grid_x[1] - grid_x[0]);
     low->setAllCellsToZero(true);
 
-    // testing regular mkde2D and mkde3D
-    for (auto it = animals->begin(); it != animals->end(); ++it) {
-        updateTime(it->second);
-        withinBounds(it->second, 4320);
-//        rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
-//               grid_x, grid_y, it->second->moveVarXY, it->second->obsVarXY, t_step, pdf_thresh);
+    //regular mkde2D and mkde3D
+    if (interaction == 1 || interaction == 2) {
+    	for (auto it = animals->begin(); it != animals->end(); ++it) {
 
+        	// 2d code
+        	if (interaction == 1) {
+        		rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+            	grid_x, grid_y, it->second->moveVarXY, it->second->obsVarXY, t_step, pdf_thresh);
+                string filename = it->first + ".asc";
+                rst->printESRIascii(filename);
+         /*       printPoints(rst, "points.txt");
+                vector<double> tempZ;
+                tempZ.push_back(0);
+                tempZ.push_back(1);
 
-        rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
+                rst3d = new gridFloat3D(rst, grid_x, grid_y);
+                writeMKDE3DtoVTK(grid_x, grid_y, tempZ, rst3d, filename, "test"); */
+
+        	}
+
+        	// 3d code
+        	if (interaction == 2) {
+
+        	    // code did not include z column, can't do 3d analysis
+        	    if (it->second->zmin == 0 && it->second->zmax == 1) {
+        	        cout << "Failed to do 3D analysis without Z column" << endl;
+        	        return 1;
+        	    }
+
+        		rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
                               grid_x, grid_y, grid_z, low, high, it->second->moveVarXY,
                               it->second->moveVarZ, it->second->obsVarXY, it->second->obsVarZ, t_step3d,
                               pdf_thresh);
 
+        		// print results to vtk file
+        		string filename = it->first + ".vtk";
+        		writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "test data");
+        	}
+    	}
+	}
 
-        string filename = it->first + ".vtk";
-        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "test data");
+    // interaction code
+	if (interaction == 3 || interaction == 4) {
+    	vector<AnimalData *> avec;	// create a vector of the animals and do interaction on pairs
+    	for (auto it = animals->begin(); it != animals->end(); ++it) {
+        	avec.push_back(it->second);
+    	}
+    	vector<double> indexes0 = assignLocationIndexToTimeGrid(grid_t, avec[0]->epochSeconds, 1000000);
+    	vector<double> indexes1 = assignLocationIndexToTimeGrid(grid_t, avec[1]->epochSeconds, 1000000);
+    
+    	// 2d interaction
+    	if (interaction == 3) {
+            vector<pointIn3D> alpha_0 = interpolateCoordinateOnTimeGrid2d(grid_t, indexes0, avec[0]->epochSeconds,
+                    avec[0]->xyz, avec[0]->moveVarXY, avec[0]->obsVarXY);
+            vector<pointIn3D> alpha_1 = interpolateCoordinateOnTimeGrid2d(grid_t, indexes1, avec[1]->epochSeconds,
+                    avec[1]->xyz, avec[1]->moveVarXY, avec[1]->obsVarXY); 
+    		rst = mkde2dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[1]->x, avec[1]->y, avec[0]->use,
+                    grid_x, grid_y, alpha_0, alpha_1, pdf_thresh); 
+		}
 
+		// 3d interaction
+		if (interaction == 4) {
 
-//        string filename = it->first + ".grass";
-//        writeMKDE3DtoGRASS(grid_x, grid_y, grid_z, rst3d, filename, "0");
+		    // code did not include z column, can't do 3d analysis
+		    if (avec[0]->zmin == -1) {
+                cout << "Failed to do 3D analysis without Z column" << endl;
+                return 1;
 
-//        string filename = it->first + ".xdmf";
-//        writeMKDE3DtoXDMF(grid_x, grid_y, grid_z, rst3d, "test", filename);
-
+		    }
+            vector<pointIn3D> alpha_0 = interpolateCoordinateOnTimeGrid(grid_t, indexes0, avec[0]->epochSeconds,
+                    avec[0]->xyz, avec[0]->moveVarXY, avec[0]->moveVarZ, avec[0]->obsVarXY, avec[0]->obsVarZ);
+            vector<pointIn3D> alpha_1 = interpolateCoordinateOnTimeGrid(grid_t, indexes1, avec[1]->epochSeconds,
+                    avec[1]->xyz, avec[1]->moveVarXY, avec[1]->moveVarZ, avec[1]->obsVarXY, avec[1]->obsVarZ); 
+    		rst3d = mkde3dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[0]->z, avec[1]->x, avec[1]->y, avec[1]->z,
+                    avec[0]->use, grid_x, grid_y, grid_z, low, high, alpha_0, alpha_1, pdf_thresh);
+		
+		// print out results to vtk file
+        string filename = "interaction3d.vtk";
+        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "interaction results");
+        printDensities(rst3d, "PointsDensities.txt");
+    	} 
     }
-/*
-    // test interaction code
-    vector<AnimalData *> avec;
-    for (auto it = animals->begin(); it != animals->end(); ++it) {
-        avec.push_back(it->second);
-    }
-    vector<double> indexes0 = assignLocationIndexToTimeGrid(grid_t, avec[0]->epochSeconds, 1000000);
-    vector<double> indexes1 = assignLocationIndexToTimeGrid(grid_t, avec[1]->epochSeconds, 1000000);
-    vector<pointIn3D> alpha_0 = interpolateCoordinateOnTimeGrid(grid_t, indexes0, avec[0]->epochSeconds,
-                                                                avec[0]->xyz, avec[0]->moveVarXY, avec[0]->moveVarZ,
-                                                                avec[0]->obsVarXY, avec[0]->obsVarZ);
-    vector<pointIn3D> alpha_1 = interpolateCoordinateOnTimeGrid(grid_t, indexes1, avec[1]->epochSeconds,
-                                                                avec[1]->xyz, avec[1]->moveVarXY, avec[1]->moveVarZ,
-                                                                avec[1]->obsVarXY, avec[1]->obsVarZ); */
-//    rst = mkde2dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[1]->x, avec[1]->y, avec[0]->use,
-//                                grid_x, grid_y, alpha_0, alpha_1, pdf_thresh);
-
-//    rst3d = mkde3dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[0]->z, avec[1]->x, avec[1]->y, avec[1]->z,
-//                                  avec[0]->use, grid_x, grid_y, grid_z, low, high, alpha_0, alpha_1, pdf_thresh);
-//    int xSz = grid_x[1] - grid_x[0];
-//    int ySz = grid_y[1] - grid_y[0];
-//            string filename = "interaction3dtest.vtk";
-//        writeMKDE3DtoVTK(grid_x, grid_y, grid_z, rst3d, filename, "testing interaction3D");
-
-/*    for (double eX = xmin; eX < xmax; eX = eX + xSz) {
-        for (double eY = ymin; eY < ymax; eY = eY + ySz) {
-            cout << rst->getGridValue(eX, eY) << endl;
-        }
-    } */
-    return 0;
+    return 1;
 }
 
 
@@ -140,10 +186,19 @@ int main() {
  * Functions that calculate MKDEs for a set of grid cells
  *****************************************************************************/
 
-// 2D CASE
-// obsT, obsX, obsY: observed data
-// xyTable: a 2d array with pairs of (x,y) coordinates of cell centers
-// tMax, tStep, mvSig2xy, obsSig2: parameters
+/*
+ * Function used to compute 2D case of MKDE. 
+ * T: vector of observed time
+ * X: vector of observed x 
+ * Y: vector of observed y
+ * use: whether we should use the corresponding point
+ * grid_x: vector of x grid
+ * grid_y: vector of y grid
+ * move_var: move variance
+ * obs_var: observation variance
+ * t_step: time step to integrate over
+ * pdf_thresh: threshold
+ */
 gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                    const vector<double> &Y, const vector<bool> &use,
                    vector<double> &grid_x, vector<double> &grid_y,
@@ -166,11 +221,12 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
     // arrays for MKDE computation
     double *ydens = (double *) malloc(nY * sizeof(double)); // to precompute y
 
-    gridFloat *rst = new gridFloat(num_grids++, nX, nY, xmin, ymin, xSz);
+    gridFloat *rst = new gridFloat(num_grids++, nY, nX, xmin, ymin, xSz);
     rst->setAllCellsToZero(true);
 
     // set up time variables
-    double t0, t1, t, tOld, dt, alpha, totalT;
+    double t0, t1, t, tOld, dt, alpha;
+    float totalT;
 
     // set up tmp variables
     double eX, eY;
@@ -251,6 +307,7 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                         }
 
                         rst->addValueToGridCell(eX, eY, tmpDens);
+                      //  cout << "tmpDens: " << tmpDens << "  new:" << rst->getGridValue(eX,eY) << endl;
                     }
                 }
 
@@ -270,9 +327,8 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
     }
 
     double maxDens = 0.0, sumDens = 0.0;
-
-    for (double eX = xmin; eX < xmax; eX = eX + xSz) {
-        for (double eY = ymin; eY < ymax; eY = eY + ySz) {
+    for (double eY = ymin; eY <= ymax; eY = eY + ySz) {
+        for (double eX = xmin; eX <= xmax; eX = eX + xSz) {
             if (rst->getGridValue(eX, eY) != FLT_NO_DATA_VALUE) {
                 rst->setGridValue(eX, eY, rst->getGridValue(eX, eY) / totalT);
                 if (rst->getGridValue(eX, eY) > maxDens) {
@@ -289,7 +345,25 @@ gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
 
 }
 
-
+/*
+ * Function used to compute 2D case of MKDE. 
+ * T: vector of observed time
+ * X: vector of observed x 
+ * Y: vector of observed y
+ * Z: vector of observed z
+ * use: whether we should use the corresponding point
+ * grid_x: vector of x grid
+ * grid_y: vector of y grid
+ * grid_z: vector of z grid
+ * zMin: grid of the minimum value for Z
+ * zMax: grid of the maxmimum value of Z
+ * msig2xy: move variance for xy
+ * msigz: move variance for z
+ * osig2xy: observation variance for xy
+ * osig2z: observation variance for z
+ * t_step: time step to integrate over
+ * pdf_thresh: threshold
+ */
 gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
                             const vector<double> &Y, const vector<double> &Z, const vector<bool> &use,
                             const vector<double> &xgrid, const vector<double> &ygrid, const vector<double> &zgrid,
@@ -428,8 +502,9 @@ gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
                             } else { // intermediate terms
                                 tmpDens = t_step[0] * pXYZ;
                             }
-
+    //                        cout << "eX: " << eX << " " << "eY: " << eY << " eZ: " << eZ << " tmpDens: " << tmpDens << endl;
                             rst3d->addValueToGridCell(eX, eY, eZ, tmpDens);
+   //                         cout << "tmpDens: " << tmpDens << "  getGrid: " << rst3d->getGridValue(eX, eY, eZ) << endl;
                             W += tmpDens;
                         }
                     }
@@ -467,14 +542,6 @@ gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
         }
     }
 
-/*
-        for (int eZ = zmin; eZ < zmax; eZ = eZ + zSz) {
-            for (int eY = ymin; eY <ymax; eY = eY + ySz) {
-                for (int eX = xmin; eX < xmax; eX = eX + xSz) {
-                    cout << "i: " << eX << "j: " << eY << "k: " << eZ << rst3d->getGridValue(eX, eY , eZ) << endl;
-                }
-            }
-        } */
     cout << "\tMaximum voxel density = " << maxDens << std::endl;
     cout << "\tSum of voxel densities = " << sumDens << std::endl;
     cout << "3D MKDE Computation: DONE" << std::endl;
@@ -514,7 +581,7 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
     double *yprob1 = (double *) malloc(nY * sizeof(double)); // To PRECOMPUTE Y
     double *ybhattdist = (double *) malloc(nY * sizeof(double)); // To PRECOMPUTE Y
 
-    gridFloat * mkde = new gridFloat(num_grids++, nX, nY, xmin, ymin, xSz);
+    gridFloat * mkde = new gridFloat(num_grids++, nY, nX, xmin, ymin, xSz);
     mkde->setAllCellsToZero(true);
 
     // set up time variables
@@ -597,9 +664,12 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
                     // Add contribution to voxel (removed Kahan summation for now)
                     double eX = indexToCellCenterCoord(i1, xmin, xSz);
                     double eY = indexToCellCenterCoord(i2, ymin, ySz);
+                                        if (j == 1541) {
+                    cout << "eX: " << eX << "eY: " << eY << endl;
+                    }
                     mkde->addValueToGridCell(eX, eY,tmpDens);
                     W0 += tmpDens0;
-                    W1 += tmpDens1;
+                    W1 += tmpDens1;  
                 }
             }
         }
@@ -617,11 +687,11 @@ gridFloat * mkde2dGridv02interact(const vector<double> &T, const vector<double> 
                 sumDens += mkde->getGridValue(eX, eY);
             }
         }
-    }
+    } 
     cout << "\tNormalizing Constant = " << normConst << "(" << 1.0 / normConst << ")" << endl;
     cout << "\tMaximum cell Bhattacharyya coeff = " << maxDist << endl;
     cout << "\tOverall Bhattacharyya coeff = " << sumDens << endl;
-    cout << "2D MKDE Interaction Computation: DONE" << endl;
+    cout << "2D MKDE Interaction Computation: DONE" << endl; 
 // RETURN DENSITY HERE
     return mkde;
 }
@@ -890,29 +960,6 @@ double integrateNormal(double x0, double x1, double mu, double sigma) {
 }
 
 /*****************************************************************************
- * Helper functions to check whether the time is within the bounds we're
- * interested in
- *****************************************************************************/
-void withinBounds(AnimalData *animal, long minutes) {
-    int bound = minutes * 60;
-    for (int i = 1; i < animal->t.size(); i++) {
-        if (animal->epochSeconds[i] - animal->epochSeconds[i - 1] >= bound) {
-            animal->use[i] = false;
-            animal->use[i - 1] = false;
-        }
-    }
-}
-
-/*****************************************************************************
- * Helper functions to adjust time relative to the first observation time.
- *****************************************************************************/
-void updateTime(AnimalData *animal) {
-    for (int i = 0; i < animal->epochSeconds.size(); i++) {
-        animal->epochSeconds[i] = animal->epochSeconds[i] - animal->epochSeconds[0];
-    }
-}
-
-/*****************************************************************************
  * Helper functions for spatial-temporal interaction
  *****************************************************************************/
 
@@ -965,6 +1012,8 @@ double integrateKernelBC(double x0, double x1, double mu1, double sigma1, double
     }
     return 0.0;
 }
+
+
 /*-----------------------------------------------------------------------------
 * Test byte order of machine                                                  *
 -----------------------------------------------------------------------------*/
@@ -980,3 +1029,22 @@ bool isMachineBigEndian(void) {
         return true;
     }
 }
+
+
+// Prints all the cells with nonzero densities
+void printDensities(gridFloat3D * mkde, string filename) {
+    std::ofstream file;
+    file.open(filename);    // open the file stream
+    file << "x,y,z,density" << endl;
+    for (double eZ = mkde->zmin; eZ <= mkde->zmax; eZ = eZ + mkde->zsize) {
+        for (double eY = mkde->ymin; eY <= mkde->ymax; eY = eY + mkde->ysize) {
+            for (double eX = mkde->xmin; eX <= mkde->xmax; eX = eX + mkde->xsize) {
+                if (mkde->getGridValue(eX, eY, eZ) > 0) {
+                    file << eX << "," << eY << "," << eZ << "," << mkde->getGridValue(eX, eY, eZ) << endl;
+                }
+            }
+        }
+    }
+    file.close();
+}
+

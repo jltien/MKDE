@@ -37,7 +37,9 @@ struct pointIn3D {
             y = yval;
             z = zval;
             time = t;
-            alpha_j = -1;
+            alpha_j = 0;
+            sig2xy = 0;
+            sig2z = 0;
     }
 };
 
@@ -48,6 +50,10 @@ std::vector<pointIn3D> interpolateCoordinateOnTimeGrid(const std::vector<time_t>
                                                        const std::vector<time_t> & location_times, const std::vector<pointIn3D> & location_xyz,
                                                        const std::vector<double> moveVarXY, const std::vector<double> moveVarZ,
                                                        const std::vector<double> obsVarXY, const std::vector<double> obsVarZ);
+
+std::vector<pointIn3D> interpolateCoordinateOnTimeGrid2d(const std::vector<time_t> & grid_times, const std::vector<double> & location_indexes,
+                                                       const std::vector<time_t> & location_times, const std::vector<pointIn3D> & location_xyz,
+                                                       const std::vector<double> moveVarXY, const std::vector<double> obsVarXY);
 
 std::vector<double> euclideanDistance(const std::vector<pointIn3D> & xyz0, const std::vector<pointIn3D> & xyz1, bool use_z);
 

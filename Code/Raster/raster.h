@@ -218,7 +218,7 @@ inline void box::print() {
 *============================================================================*/
 class gridFloat {
 	private:
-        // properties of the raster
+        // properties of the raster 
 	    long num_rows;                                               // number of rows
 	    long num_cols;                                               // number of cols
 	    double cell_size;                                            // cell width
@@ -229,6 +229,13 @@ class gridFloat {
 	    float ** data;                                               // grid data 2D dynamic Array
         int rasterID;                                                // an ID number fo rthis raster layer
 	public:
+        double xmin;
+        double xmax;
+        double xsize;
+        double ymin;
+        double ymax;
+        double ysize;
+
 	    gridFloat();                                                 // default constructor
         gridFloat(int rID, long nr, long nc, double xll, double yll, double cellsz);  // contruct and array of 0.0s
 	    gridFloat(int rID, char * filenm, char * filetype);           // filetype = (esri_ascii, esri_binary)
@@ -282,7 +289,7 @@ class gridFloat {
         // printing functions
         void summary();                                              // displays grid summary to standard output
         void display();                                              // print to standard output
-        void printESRIascii(char * filen);                           // print to ESRI ASCII raster
+        void printESRIascii(std::string filen);                           // print to ESRI ASCII raster
         void printESRIbinary(char * filen);                          // print to ESRI BINARY raster
 };
 
@@ -309,9 +316,9 @@ public:
     int znum;
     long no_dat = -9999;
 
-   /*  gridFloat3D(double xmn, double ymn, double zmn, double xmx,
-                double ymx, double zmx, double xsz, double ysz, double zsz, double nX, double nY, double nZ); */
+ 
     gridFloat3D(const std::vector<double> &xgrid, const std::vector<double> &ygrid, const std::vector<double> &zgrid);
+    gridFloat3D(gridFloat * grid, std::vector<double> &xgrid, std::vector<double> &ygrid);
     ~gridFloat3D();
 
     float getGridValue(double eX, double eY, double eZ);
