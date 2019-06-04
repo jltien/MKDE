@@ -1,7 +1,11 @@
-#include "pairwiseFunctions.h"
-// Preconditions: Location times in data are sorted in order of increasing time, no NAN values
+/*
+ * This file contains the helper functions for the interaction code.
+ * Preconditions: Location times in data are sorted in order of increasing time, no NAN values
+ */
 
-// Associates the observed points with the interpolated coordinates
+#include "pairwiseFunctions.h"
+
+//Associates the observed points with the interpolated coordinates
 std::vector<double> assignLocationIndexToTimeGrid(const std::vector<time_t> grid_times,
                                                const std::vector<time_t> location_times, double dt_max) {
     double NA_INDEX = NAN;
@@ -31,7 +35,7 @@ std::vector<double> assignLocationIndexToTimeGrid(const std::vector<time_t> grid
     return location_indexes;
 }
 
-
+//Interpolates the locations for each point on the time grid for the 3D case
 std::vector<pointIn3D> interpolateCoordinateOnTimeGrid(const std::vector<time_t> & grid_times, const std::vector<double> & location_indexes,
                                                        const std::vector<time_t> & location_times, const std::vector<pointIn3D> & location_xyz,
                                                        const std::vector<double> moveVarXY, const std::vector<double> moveVarZ,
@@ -73,7 +77,7 @@ std::vector<pointIn3D> interpolateCoordinateOnTimeGrid(const std::vector<time_t>
     return res_xyz;
 }
 
-
+// Interpolates the locations for each point on the time grid for the 2D case
 std::vector<pointIn3D> interpolateCoordinateOnTimeGrid2d(const std::vector<time_t> & grid_times, const std::vector<double> & location_indexes,
                                                        const std::vector<time_t> & location_times, const std::vector<pointIn3D> & location_xyz,
                                                        const std::vector<double> moveVarXY, const std::vector<double> obsVarXY) {
@@ -110,6 +114,7 @@ std::vector<pointIn3D> interpolateCoordinateOnTimeGrid2d(const std::vector<time_
     return res_xyz;
 }
 
+//Calculate the distance between two animals for each point on the time grid
 std::vector<double> euclideanDistance(const std::vector<pointIn3D> & xyz0, const std::vector<pointIn3D> & xyz1, bool use_z) {
 
     use_z = false;
@@ -137,7 +142,7 @@ std::vector<double> euclideanDistance(const std::vector<pointIn3D> & xyz0, const
 }
 
 
-// Writes result from Interpolate and EuclideanDistance to csv file
+//Writes result from Interpolate and EuclideanDistance to csv file
 void printInterpolateAndEuclidean(const std::string filename, const std::vector<pointIn3D> res_xyz, const std::vector<double> res_dist) {
     std::ofstream csv;
     csv.open(filename);
@@ -151,7 +156,7 @@ void printInterpolateAndEuclidean(const std::string filename, const std::vector<
 }
 
 
-// Writes result from EuclideanDistance to csv file
+//Writes result from EuclideanDistance to csv file
 void printEuclidean(const std::string filename, const std::vector<double> res_dist) {
     std::ofstream csv;
     csv.open(filename);
