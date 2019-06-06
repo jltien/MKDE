@@ -36,7 +36,7 @@ int main() {
  * Sets up all the structures needed to do MKDE calculation and calls
  * the specified interaction function and prints to specified outfile type.
  */
-void mkde(string filepath, short interaction, int outfile) {
+void mkde(string filepath, short interaction, short outfile) {
     unordered_map<string, AnimalData *> *animals;
     animals = fileRead(filepath);
     if (animals == nullptr) {   //Reading the file has failed
