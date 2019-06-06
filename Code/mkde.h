@@ -31,6 +31,8 @@ const double RSQRT2PI = 0.39894228040143267793994605993438; // 1/sqrt(2*pi)
 
 const int JMAX = 20;
 
+void mkde(string filepath, short interaction, short outfile);
+
 gridFloat * mkde2D(const vector<double> &T, const vector<double> &X,
                       const vector<double> &Y, const vector<bool> &use,
                       vector<double> &grid_x, vector<double> &grid_y,
