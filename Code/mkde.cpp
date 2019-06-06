@@ -1,7 +1,6 @@
 /* This file contains the main logic for MKDE. It processes the user for input and
  * runs the corresponding interaction and prints the results.
  */
-
 #include "mkde.h"
 #include "Raster/ioFunctions.h"
 #define padding 1000    //padding for the grids
@@ -9,15 +8,9 @@
 int main() {
 
     //Prompts user for file with data and processes it
-    unordered_map<string, AnimalData *> *animals;
     cout << "File path to animal data: ";
  	string filepath;
     cin >> filepath;
-    animals = fileRead(filepath);
-    if (animals == nullptr) {   //Reading the file has failed
-    	cout << "Make sure the path is absolute!" << endl;
-    	return 0;
-    }
 
     //Prompts user for interaction type
     cout << "\n(1) 2-Dimension" << "\n(2) 3-Dimension"
@@ -25,7 +18,6 @@ int main() {
     			<< "\n(4) 3-Dimension Interaction" << endl << "\nType of interaction: ";
     short interaction;
     cin >> interaction;
-
 
     // Prompt user for output file type
     short outfile;
@@ -36,6 +28,21 @@ int main() {
         cout << "\n(1) VTK" << "\n(2) GRASS" << "\n(3) XDMF" << endl << "\nType of output file: ";
     }
     cin >> outfile;
+    mkde(filepath, interaction, outfile);
+    return 1;
+}
+
+/*
+ * Sets up all the structures needed to do MKDE calculation and calls
+ * the specified interaction function and prints to specified outfile type.
+ */
+void mkde(string filepath, short interaction, int outfile) {
+    unordered_map<string, AnimalData *> *animals;
+    animals = fileRead(filepath);
+    if (animals == nullptr) {   //Reading the file has failed
+        cout << "Make sure the path is absolute or that file exists!" << endl;
+        return;
+    }
 
     //Set up the grids for calculation
     vector<double> grid_x;  //x grid
@@ -115,16 +122,16 @@ int main() {
 
     //Regular mkde 2D and mkde 3D
     if (interaction == 1 || interaction == 2) {
-    	for (auto it = animals->begin(); it != animals->end(); ++it) {
+        for (auto it = animals->begin(); it != animals->end(); ++it) {
 
-        	//2D for individual animals
-        	if (interaction == 1) {
+            //2D for individual animals
+            if (interaction == 1) {
 
-        	    //Perform actual calculations
-        		rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
-            	grid_x, grid_y, it->second->moveVarXY, it->second->obsVarXY, t_step, pdf_thresh);
+                //Perform actual calculations
+                rst = mkde2D(it->second->t, it->second->x, it->second->y, it->second->use,
+                             grid_x, grid_y, it->second->moveVarXY, it->second->obsVarXY, t_step, pdf_thresh);
 
-        		//Prints results
+                //Prints results
                 if (outfile == 1) { //ESRI ascii
                     string filename = it->first + ".asc";
                     rst->printESRIascii(filename);
@@ -134,28 +141,20 @@ int main() {
                     char * cstr = &filename[0u];
                     rst->printESRIbinary(cstr);
                 }
+            }
 
-         /*       printPoints(rst, "points.txt");
-                vector<double> tempZ;
-                tempZ.push_back(0);
-                tempZ.push_back(1);
-
-                rst3d = new gridFloat3D(rst, grid_x, grid_y);
-                writeMKDE3DtoVTK(grid_x, grid_y, tempZ, rst3d, filename, "test"); */
-        	}
-
-        	// 3D for individual animals
-        	if (interaction == 2) {
-        	    if (it->second->zmin == 0 && it->second->zmax == 1) {   //Data did not include z column
-        	        cout << "Failed to do 3D analysis without Z column" << endl;
-        	        return 1;
-        	    }
+            // 3D for individual animals
+            if (interaction == 2) {
+                if (it->second->zmin == 0 && it->second->zmax == 1) {   //Data did not include z column
+                    cout << "Failed to do 3D analysis without Z column" << endl;
+                    return;
+                }
 
                 //Perform actual calculations
-        		rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
-                              grid_x, grid_y, grid_z, low, high, it->second->moveVarXY,
-                              it->second->moveVarZ, it->second->obsVarXY, it->second->obsVarZ, t_step3d,
-                              pdf_thresh);
+                rst3d = mkde3dGridv02(it->second->t, it->second->x, it->second->y, it->second->z, it->second->use,
+                                      grid_x, grid_y, grid_z, low, high, it->second->moveVarXY,
+                                      it->second->moveVarZ, it->second->obsVarXY, it->second->obsVarZ, t_step3d,
+                                      pdf_thresh);
 
                 //Prints results
                 if (outfile == 1) { //VTK
@@ -170,27 +169,27 @@ int main() {
                     string filename = it->first + ".xdmf";
                     writeMKDE3DtoXDMF(grid_x, grid_y, grid_z, rst3d, filename, "results from mkde3d");
                 }
-        	}
-    	}
-	}
+            }
+        }
+    }
 
     //Interaction mkde 2D and mkde 3D
-	else if (interaction == 3 || interaction == 4) {
-    	vector<AnimalData *> avec;	//Create a vector of the animals and do interaction on pairs
-    	for (auto it = animals->begin(); it != animals->end(); ++it) {
-        	avec.push_back(it->second);
-    	}
+    else if (interaction == 3 || interaction == 4) {
+        vector<AnimalData *> avec;	//Create a vector of the animals and do interaction on pairs
+        for (auto it = animals->begin(); it != animals->end(); ++it) {
+            avec.push_back(it->second);
+        }
 
-    	vector<double> indexes0 = assignLocationIndexToTimeGrid(grid_t, avec[0]->epochSeconds, 1000000);
-    	vector<double> indexes1 = assignLocationIndexToTimeGrid(grid_t, avec[1]->epochSeconds, 1000000);
-    
-    	//2D interaction
-    	if (interaction == 3) {
+        vector<double> indexes0 = assignLocationIndexToTimeGrid(grid_t, avec[0]->epochSeconds, 1000000);
+        vector<double> indexes1 = assignLocationIndexToTimeGrid(grid_t, avec[1]->epochSeconds, 1000000);
+
+        //2D interaction
+        if (interaction == 3) {
             vector<pointIn3D> alpha_0 = interpolateCoordinateOnTimeGrid2d(grid_t, indexes0, avec[0]->epochSeconds,
                     avec[0]->xyz, avec[0]->moveVarXY, avec[0]->obsVarXY);
             vector<pointIn3D> alpha_1 = interpolateCoordinateOnTimeGrid2d(grid_t, indexes1, avec[1]->epochSeconds,
-                    avec[1]->xyz, avec[1]->moveVarXY, avec[1]->obsVarXY); 
-    		rst = mkde2dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[1]->x, avec[1]->y, avec[0]->use,
+                    avec[1]->xyz, avec[1]->moveVarXY, avec[1]->obsVarXY);
+            rst = mkde2dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[1]->x, avec[1]->y, avec[0]->use,
                     grid_x, grid_y, alpha_0, alpha_1, pdf_thresh);
 
             //Prints results
@@ -203,21 +202,21 @@ int main() {
                 char * cstr = &filename[0u];
                 rst->printESRIbinary(cstr);
             }
-		}
+        }
 
-		//3D interaction
-		if (interaction == 4) {
-		    if (avec[0]->zmin == 0 && avec[0]->zmax == 1) {     //Data did not include 3D column
+        //3D interaction
+        if (interaction == 4) {
+            if (avec[0]->zmin == 0 && avec[0]->zmax == 1) {     //Data did not include 3D column
                 cout << "Failed to do 3D analysis without Z column" << endl;
-                return 1;
+                return;
 
-		    }
+            }
             vector<pointIn3D> alpha_0 = interpolateCoordinateOnTimeGrid(grid_t, indexes0, avec[0]->epochSeconds,
                     avec[0]->xyz, avec[0]->moveVarXY, avec[0]->moveVarZ, avec[0]->obsVarXY, avec[0]->obsVarZ);
             vector<pointIn3D> alpha_1 = interpolateCoordinateOnTimeGrid(grid_t, indexes1, avec[1]->epochSeconds,
-                    avec[1]->xyz, avec[1]->moveVarXY, avec[1]->moveVarZ, avec[1]->obsVarXY, avec[1]->obsVarZ); 
-    		rst3d = mkde3dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[0]->z, avec[1]->x, avec[1]->y,
-    		        avec[1]->z, avec[0]->use, grid_x, grid_y, grid_z, low, high, alpha_0, alpha_1, pdf_thresh);
+                    avec[1]->xyz, avec[1]->moveVarXY, avec[1]->moveVarZ, avec[1]->obsVarXY, avec[1]->obsVarZ);
+            rst3d = mkde3dGridv02interact(avec[0]->t, avec[0]->x, avec[0]->y, avec[0]->z, avec[1]->x, avec[1]->y,
+                    avec[1]->z, avec[0]->use, grid_x, grid_y, grid_z, low, high, alpha_0, alpha_1, pdf_thresh);
 
             //Prints results
             if (outfile == 1) { //VTK
@@ -232,18 +231,15 @@ int main() {
                 string filename = "interaction3d.xdmf";
                 writeMKDE3DtoXDMF(grid_x, grid_y, grid_z, rst3d, filename, "results from mkde3d");
             }
-    	}
+        }
     }
-    return 1;
 }
-
-
 /*****************************************************************************
  * Functions that calculate MKDEs for a set of grid cells
  *****************************************************************************/
 
 /*
- * Function used to compute 2D case of MKDE. 
+ * Function used to compute 2D case of MKDE.
  * T: vector of observed time
  * X: vector of observed x 
  * Y: vector of observed y
@@ -524,7 +520,7 @@ gridFloat3D * mkde3dGridv02(const vector<double> &T, const vector<double> &X,
                                                     0, zgrid[0], zSz));
                         int i3hi = std::min(nZ,
                                             getUpperCellIndex(/*zMax.getGridValue(xmin + (double)i1, ymin + (double)i2)*/
-                                                    5000, zgrid[0], zSz) +
+                                                    10000, zgrid[0], zSz) +
                                             1); // add 1 because less than
                         double loZ = indexToCellCenterCoord(i3lo, zgrid[0], zSz) - 0.5 * zSz;
                         double hiZ = indexToCellCenterCoord(i3hi - 1, zgrid[0], zSz) + 0.5 * zSz;
@@ -856,7 +852,7 @@ gridFloat3D * mkde3dGridv02interact(const vector<double> &T, const vector<double
 
                 // get the range of indexes and coordinates based on the physical boundaries
                 int i3lo = std::max(0, getLowerCellIndex(/*zMin(i1, i2)*/0, zGrid[0], zSz));
-                int i3hi = std::min(nZ, getUpperCellIndex(/*zMax(i1, i2)*/5000, zGrid[0], zSz) +
+                int i3hi = std::min(nZ, getUpperCellIndex(/*zMax(i1, i2)*/10000, zGrid[0], zSz) +
                                         1); // add 1 because less than
                 double loZ = indexToCellCenterCoord(i3lo, zGrid[0], zSz) - 0.5 * zSz;
                 double hiZ = indexToCellCenterCoord(i3hi - 1, zGrid[0], zSz) + 0.5 * zSz;
