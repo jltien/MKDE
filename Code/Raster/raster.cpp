@@ -943,24 +943,6 @@ gridFloat3D::gridFloat3D(const std::vector<double> &xgrid, const std::vector<dou
     }
 }
 
-gridFloat3D::gridFloat3D(gridFloat * rst, std::vector<double> &xgrid, std::vector<double> &ygrid) {
-    xmin = xgrid[0];
-    ymin = ygrid[0];
-    xmax = xgrid[xgrid.size() - 1];
-    ymax = ygrid[ygrid.size() - 1];
-    xsize = xgrid[1] - xgrid[0];
-    ysize = ygrid[1] - ygrid[0];
-    xnum = xgrid.size();
-    ynum = ygrid.size();
-    zmin = 0; 
-    zmax = 0;
-    zsize = 1;
-    znum = 1;
-
-    this->xy_grids.push_back(rst);
-    //this->xy_grids.push_back(rst);
-}
-
 gridFloat3D::~gridFloat3D() {
     for (int i = 0; i < xy_grids.size(); i++) {
         delete xy_grids[i];
