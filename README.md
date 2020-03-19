@@ -6,7 +6,7 @@
 <pre>
 To run the code:
   1. Download/clone the code from the repository. 
-  2. Open a terminal and navigate to the file Code file.
+  2. Open a terminal and navigate to 'Code' file.
   3. Run 'make' to compile the code.
   4. Run './mkde' to run the program. 
         The program will then prompt for: 
